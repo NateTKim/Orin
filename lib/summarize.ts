@@ -168,9 +168,9 @@ HARD RULES — these override everything else:
 3. The filing excerpt is context for the company's own narrative. You may describe what management discusses, but you must not quote or use any NUMBER from the excerpt — numbers come only from EXTRACTED FIGURES.
 4. No investment advice, no price targets, no speculation about the stock.
 
-Output format:
-- Two short paragraphs of plain-English summary: what the company reported this period and how the business performed, in words a non-expert understands.
-- Then a section titled "Notable changes" with 2-4 bullet points about the year-over-year moves, using only the provided figures.`;
+Output format (PLAIN TEXT ONLY — no markdown, no asterisks, no # headers):
+- Two short paragraphs of plain-English summary: what the company reported this period and how the business performed, in words a non-expert understands. Separate paragraphs with a blank line.
+- Then a line containing exactly "Notable changes" followed by 2-4 bullet lines, each starting with "- ", about the year-over-year moves, using only the provided figures.`;
 
 export async function summarizeFiling(
   snapshot: FilingSnapshot,
