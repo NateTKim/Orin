@@ -170,7 +170,8 @@ HARD RULES — these override everything else:
 
 Output format (PLAIN TEXT ONLY — no markdown, no asterisks, no # headers):
 - Two short paragraphs of plain-English summary: what the company reported this period and how the business performed, in words a non-expert understands. Separate paragraphs with a blank line.
-- Then a line containing exactly "Notable changes" followed by 2-4 bullet lines, each starting with "- ", about the year-over-year moves, using only the provided figures.`;
+- Then a line containing exactly "Notable changes" followed by 2-4 bullet lines, each starting with "- ", about the year-over-year moves, using only the provided figures.
+- Then a line containing exactly "What management may be downplaying" followed by 2-3 bullet lines, each starting with "- ". These are careful, qualitative observations drawn ONLY from the filing excerpt: risks or headwinds management mentions briefly or in softened language, caveats buried in the discussion, or unfavorable trends given little airtime. Hedge appropriately ("may", "appears"), never accuse, and use no numbers (rule 1 still applies). If nothing stands out, output a single bullet: "- Nothing in this filing's discussion stood out as being played down."`;
 
 export async function summarizeFiling(
   snapshot: FilingSnapshot,
