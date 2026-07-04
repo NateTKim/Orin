@@ -7,6 +7,9 @@ import {
   ArrowUpRight,
   ExternalLink,
   Eye,
+  FileText,
+  Search,
+  Sparkles,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,6 +53,16 @@ export default function Home() {
     }
   }
 
+  // Before the first lookup, show the landing page (hero + how it works +
+  // trust). Once a lookup starts, switch to the focused tool view.
+  if (view.kind === "idle") {
+    return (
+      <div className="relative min-h-screen overflow-x-clip bg-background">
+        <Landing ticker={ticker} setTicker={setTicker} onSubmit={lookup} />
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-screen overflow-x-clip bg-background">
       {/* Soft accent glow behind the header */}
@@ -58,32 +71,22 @@ export default function Home() {
         className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(50%_60%_at_50%_0%,--theme(--color-primary/14%),transparent_70%)]"
       />
       <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-14 sm:py-16">
-        <header className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <h1 className="text-3xl font-semibold tracking-tight text-primary">Orin</h1>
-            <p className="max-w-md text-[15px] leading-6 text-muted-foreground">
-              Company reports, explained in plain English — with the real numbers and the
-              things most people miss.
-            </p>
-          </div>
-          <form onSubmit={lookup} className="flex gap-2">
-            <Input
-              value={ticker}
-              onChange={(e) => setTicker(e.target.value)}
-              placeholder="Ticker, e.g. AAPL"
-              aria-label="Stock ticker"
-              maxLength={10}
-              className="h-11 max-w-48 rounded-xl border-white/10 bg-card text-base shadow-inner"
-            />
-            <Button
-              type="submit"
-              size="lg"
-              className="h-11 rounded-xl px-5 shadow-[0_0_24px_-6px_var(--color-primary)]"
-              disabled={view.kind === "loading"}
-            >
-              {view.kind === "loading" ? "Reading…" : "Explain it"}
-            </Button>
-          </form>
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => setView({ kind: "idle" })}
+            className="text-2xl font-semibold tracking-tight text-primary transition-opacity hover:opacity-80"
+            aria-label="Back to Orin home"
+          >
+            Orin
+          </button>
+          <SearchForm
+            ticker={ticker}
+            setTicker={setTicker}
+            onSubmit={lookup}
+            loading={view.kind === "loading"}
+            variant="compact"
+          />
         </header>
 
         {view.kind === "loading" && <LoadingState ticker={view.ticker} />}
@@ -96,6 +99,166 @@ export default function Home() {
         </footer>
       </main>
     </div>
+  );
+}
+
+/* ------------------------------- search form ----------------------------- */
+
+function SearchForm({
+  ticker,
+  setTicker,
+  onSubmit,
+  loading,
+  variant,
+}: {
+  ticker: string;
+  setTicker: (v: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  loading: boolean;
+  variant: "hero" | "compact";
+}) {
+  const hero = variant === "hero";
+  return (
+    <form onSubmit={onSubmit} className={cn("flex gap-2", hero && "w-full max-w-md")}>
+      <Input
+        value={ticker}
+        onChange={(e) => setTicker(e.target.value)}
+        placeholder="Ticker, e.g. AAPL"
+        aria-label="Stock ticker"
+        maxLength={10}
+        className={cn(
+          "rounded-xl border-white/10 bg-card text-base shadow-inner",
+          hero ? "h-12 flex-1" : "h-11 max-w-48",
+        )}
+      />
+      <Button
+        type="submit"
+        size="lg"
+        className={cn(
+          "rounded-xl shadow-[0_0_24px_-6px_var(--color-primary)]",
+          hero ? "h-12 px-6 text-[15px]" : "h-11 px-5",
+        )}
+        disabled={loading}
+      >
+        {loading ? "Reading…" : "Explain it"}
+      </Button>
+    </form>
+  );
+}
+
+/* -------------------------------- landing -------------------------------- */
+
+function Landing({
+  ticker,
+  setTicker,
+  onSubmit,
+}: {
+  ticker: string;
+  setTicker: (v: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+}) {
+  return (
+    <div className="flex flex-col">
+      {/* Hero */}
+      <section className="relative flex flex-col items-center px-6 pt-24 pb-16 text-center sm:pt-32 sm:pb-24">
+        {/* One tasteful centerpiece: a soft indigo glow that breathes behind
+            the headline (see .orin-hero-glow in globals.css). */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="orin-hero-glow absolute left-1/2 top-[-12%] h-[560px] w-[820px] max-w-[150vw] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,--theme(--color-primary/22%),transparent_65%)] blur-2xl" />
+        </div>
+
+        <span className="text-lg font-semibold tracking-tight text-primary">Orin</span>
+        <h1 className="mt-8 max-w-3xl text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
+          Understand what you own
+        </h1>
+        <p className="mt-5 max-w-xl text-balance text-base leading-7 text-muted-foreground sm:text-lg">
+          Orin reads company earnings reports and tells you in plain English what&apos;s
+          really going on — including what most people miss.
+        </p>
+
+        <div className="mt-9 flex w-full justify-center">
+          <SearchForm
+            ticker={ticker}
+            setTicker={setTicker}
+            onSubmit={onSubmit}
+            loading={false}
+            variant="hero"
+          />
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground/70">Free · no account needed</p>
+      </section>
+
+      {/* How it works */}
+      <section className="mx-auto w-full max-w-4xl px-6 py-8" aria-label="How Orin works">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <HowStep
+            n={1}
+            icon={<Search className="size-4.5 text-accent-foreground" aria-hidden />}
+            title="Type a ticker"
+            body="Any US-listed company — like AAPL or NVDA."
+          />
+          <HowStep
+            n={2}
+            icon={<FileText className="size-4.5 text-accent-foreground" aria-hidden />}
+            title="Orin reads the filing"
+            body="The latest official quarterly or annual report, start to finish."
+          />
+          <HowStep
+            n={3}
+            icon={<Sparkles className="size-4.5 text-accent-foreground" aria-hidden />}
+            title="Get the real story"
+            body="A plain-English summary, the key numbers, and the fine print."
+          />
+        </div>
+      </section>
+
+      {/* Trust / differentiation */}
+      <section className="mx-auto w-full max-w-3xl px-6 py-10">
+        <div className="rounded-2xl border border-primary/20 bg-card/60 p-8 text-center shadow-[0_0_60px_-24px_var(--color-primary)]">
+          <p className="text-balance text-lg font-medium leading-8 tracking-tight sm:text-xl">
+            Other tools show you the numbers.{" "}
+            <span className="text-primary">Orin actually reads the report</span> — the
+            risks, the fine print, and the things companies would rather you skim past.
+          </p>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="mx-auto w-full max-w-4xl px-6 pb-14 pt-6">
+        <p className="border-t border-white/[0.06] pt-6 text-center text-xs leading-5 text-muted-foreground">
+          Orin helps you understand company filings. It is not investment advice.
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+function HowStep({
+  n,
+  icon,
+  title,
+  body,
+}: {
+  n: number;
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
+  return (
+    <Card className={cardShell}>
+      <CardContent className="flex flex-col gap-3 py-2">
+        <div className="flex items-center gap-2.5">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/25">
+            {icon}
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Step {n}
+          </span>
+        </div>
+        <h3 className="text-base font-semibold tracking-tight">{title}</h3>
+        <p className="text-sm leading-6 text-muted-foreground">{body}</p>
+      </CardContent>
+    </Card>
   );
 }
 

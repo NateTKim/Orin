@@ -131,3 +131,29 @@
     @apply font-sans;
   }
 }
+
+/* Landing hero: one tasteful centerpiece — a soft indigo glow that slowly
+   breathes and drifts behind the headline. GPU-friendly (transform + opacity
+   only) and disabled for users who prefer reduced motion. */
+@keyframes orin-hero-glow {
+  0%,
+  100% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 0.72;
+  }
+  50% {
+    transform: translate(-50%, 3%) scale(1.12);
+    opacity: 1;
+  }
+}
+
+.orin-hero-glow {
+  animation: orin-hero-glow 8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orin-hero-glow {
+    animation: none;
+  }
+}
