@@ -1,5 +1,5 @@
 import { resolveTicker } from "./cik.ts";
-import { getCompanyFacts, extractMetrics } from "./facts.ts";
+import { getCompanyFacts, extractHistory, extractMetrics } from "./facts.ts";
 import { getLatestFilings, pickLatestFiling } from "./filings.ts";
 import type { FilingSnapshot } from "./types.ts";
 
@@ -34,6 +34,7 @@ export async function getFilingSnapshot(ticker: string): Promise<SnapshotResult>
 
     const facts = await getCompanyFacts(cik.cik);
     const metrics = extractMetrics(facts, filing);
+    const { history, historyKind } = extractHistory(facts, filing);
 
     return {
       ok: true,
@@ -46,6 +47,8 @@ export async function getFilingSnapshot(ticker: string): Promise<SnapshotResult>
         filedDate: filing.filedDate,
         filingUrl: filing.documentUrl,
         metrics,
+        history,
+        historyKind,
       },
     };
   } catch (err) {

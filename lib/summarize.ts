@@ -4,12 +4,11 @@
 // prompt; checkForInventedNumbers() flags anything outside that set.
 
 import Anthropic from "@anthropic-ai/sdk";
-import { fetchEdgarText } from "./edgar/client.ts";
+import { getFilingText } from "./edgar/document.ts";
 import { formatPct, formatPerShare, formatUsd } from "./format.ts";
 import type { FilingSnapshot, MetricValue } from "./edgar/types.ts";
 
 const MODEL = "claude-sonnet-4-6";
-const MDNA_EXCERPT_CHARS = 12000;
 
 export interface SummaryResult {
   /** Plain-English summary; empty string means summarization failed. */
@@ -89,34 +88,9 @@ function buildFigures(snapshot: FilingSnapshot): AllowedFigures {
 }
 
 // ---------------------------------------------------------------------------
-// MD&A excerpt from the actual filing document
+// Filing text: section-aware extraction lives in lib/edgar/document.ts
+// (full risk factors + MD&A weighted to its later sections + closing notes).
 // ---------------------------------------------------------------------------
-
-function htmlToText(html: string): string {
-  return html
-    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;|&#160;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&#8217;|&rsquo;/g, "'")
-    .replace(/&#8220;|&#8221;|&ldquo;|&rdquo;/g, '"')
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-/**
- * Best-effort excerpt of the MD&A section. The heading appears in the table
- * of contents first and at the section itself later, so we take the LAST
- * occurrence. Falls back to the start of the document text.
- */
-export async function getMdnaExcerpt(filingUrl: string): Promise<string> {
-  const html = await fetchEdgarText(filingUrl);
-  const text = htmlToText(html);
-  const needle = "management's discussion and analysis";
-  const idx = text.toLowerCase().lastIndexOf(needle);
-  const start = idx >= 0 ? idx : 0;
-  return text.slice(start, start + MDNA_EXCERPT_CHARS);
-}
 
 // ---------------------------------------------------------------------------
 // Invented-number check
@@ -160,25 +134,27 @@ export function checkForInventedNumbers(
 // The summary call
 // ---------------------------------------------------------------------------
 
-const SYSTEM_PROMPT = `You write plain-English summaries of SEC filings for retail investors.
+const SYSTEM_PROMPT = `You write plain-English summaries of SEC filings for everyday beginner investors — people who have never read a filing and may not know finance words.
+
+Write simply (roughly an 8th-grade reading level): short sentences, everyday words, no jargon. When a financial term is unavoidable, explain it in a few plain words in parentheses the first time you use it — e.g. "diluted EPS (profit earned per share)", "operating income (profit from day-to-day business)". Say "money the company brought in" rather than "top-line performance". Never talk down to the reader; just be clear.
 
 HARD RULES — these override everything else:
 1. You may ONLY use the financial figures provided in the "EXTRACTED FIGURES" section, copied EXACTLY as written there (same formatting, same rounding). Never generate, estimate, derive, round differently, or infer any number — no computing changes, ratios, or totals yourself. In particular, NEVER state a dollar-amount change (e.g. "grew by $12 billion") and NEVER state a ratio or multiple you computed (e.g. "2.5 times faster") — describe changes only with the provided year-over-year percentages, or in qualitative words ("faster than", "roughly double").
 2. If a figure says "not reported", say it was not reported (when relevant) — never fill in a value.
-3. The filing excerpt is context for the company's own narrative. You may describe what management discusses, but you must not quote or use any NUMBER from the excerpt — numbers come only from EXTRACTED FIGURES.
+3. The FILING TEXT sections are context for the company's own narrative. You may describe what management discusses, but you must not quote or use any NUMBER from them — numbers come only from EXTRACTED FIGURES. Where text was omitted (marked "[... omitted ...]"), never guess at what it said.
 4. No investment advice, no price targets, no speculation about the stock.
 
 Output format (PLAIN TEXT ONLY — no markdown, no asterisks, no # headers):
 - Two short paragraphs of plain-English summary: what the company reported this period and how the business performed, in words a non-expert understands. Separate paragraphs with a blank line.
 - Then a line containing exactly "Notable changes" followed by 2-4 bullet lines, each starting with "- ", about the year-over-year moves, using only the provided figures.
-- Then a line containing exactly "What management may be downplaying" followed by 2-3 bullet lines, each starting with "- ". These are careful, qualitative observations drawn ONLY from the filing excerpt: risks or headwinds management mentions briefly or in softened language, caveats buried in the discussion, or unfavorable trends given little airtime. Hedge appropriately ("may", "appears"), never accuse, and use no numbers (rule 1 still applies). If nothing stands out, output a single bullet: "- Nothing in this filing's discussion stood out as being played down."`;
+- Then a line containing exactly "What management may be downplaying" followed by 2-3 bullet lines, each starting with "- ". These are careful, qualitative observations drawn ONLY from the filing text sections (risk factors, MD&A, notes): risks or headwinds management mentions briefly or in softened language, caveats buried late in the discussion or in the notes, or unfavorable trends given little airtime. Prefer what is SPECIFIC to this company and this period — a named lawsuit or investigation, a customer or supplier concentration, debt or covenant pressure, a segment quietly deteriorating, a new risk factor that wasn't boilerplate — over generic risks that appear in every filing (competition, macro conditions, "our stock price may fluctuate"). Hedge appropriately ("may", "appears"), never accuse, and use no numbers (rule 1 still applies). If nothing stands out, output a single bullet: "- Nothing in this filing's discussion stood out as being played down."`;
 
 export async function summarizeFiling(
   snapshot: FilingSnapshot,
 ): Promise<SummaryResult> {
   try {
     const figures = buildFigures(snapshot);
-    const mdna = await getMdnaExcerpt(snapshot.filingUrl);
+    const { promptText: filingText } = await getFilingText(snapshot.filingUrl);
 
     const userMessage = `Company: ${snapshot.companyName} (${snapshot.ticker})
 Filing: ${snapshot.form} for the fiscal period ended ${snapshot.periodEnd}, filed ${snapshot.filedDate}
@@ -186,8 +162,8 @@ Filing: ${snapshot.form} for the fiscal period ended ${snapshot.periodEnd}, file
 EXTRACTED FIGURES (the only numbers you may use, verbatim):
 ${figures.lines.join("\n")}
 
-FILING EXCERPT (context only — do not use numbers from it):
-${mdna}`;
+FILING TEXT (context only — do not use numbers from it):
+${filingText}`;
 
     const client = new Anthropic();
     const response = await client.messages.create({
@@ -212,7 +188,7 @@ ${mdna}`;
 
     return {
       summary,
-      inventedNumberWarnings: checkForInventedNumbers(summary, figures.allowed, snapshot, mdna),
+      inventedNumberWarnings: checkForInventedNumbers(summary, figures.allowed, snapshot, filingText),
       error: null,
     };
   } catch (err) {

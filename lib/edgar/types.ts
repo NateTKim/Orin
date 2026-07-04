@@ -114,6 +114,19 @@ export interface MetricValue {
   unit: string | null;
 }
 
+/**
+ * One point of revenue/EPS history for the trend chart. Values are raw units.
+ * `revenueDerived` marks fiscal Q4 values computed as (annual − the three
+ * reported sibling quarters) — deterministic arithmetic on EDGAR figures,
+ * needed because companies file no 10-Q for their fourth fiscal quarter.
+ */
+export interface HistoryPoint {
+  periodEnd: string;
+  revenue: number;
+  eps: number | null;
+  revenueDerived: boolean;
+}
+
 export interface FilingSnapshot {
   ticker: string;
   companyName: string;
@@ -134,4 +147,11 @@ export interface FilingSnapshot {
     totalAssets: MetricValue;
     totalLiabilities: MetricValue;
   };
+  /**
+   * Real revenue/EPS history from the same companyfacts response, oldest
+   * first, for the trend chart. Quarterly when the latest filing is a 10-Q,
+   * annual when it's a 10-K. Empty when no clean history exists.
+   */
+  history: HistoryPoint[];
+  historyKind: "quarterly" | "annual";
 }

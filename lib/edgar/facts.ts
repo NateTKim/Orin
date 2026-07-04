@@ -2,6 +2,7 @@ import { fetchEdgarJson } from "./client.ts";
 import type {
   CompanyFactsResponse,
   FilingRef,
+  HistoryPoint,
   MetricValue,
   XbrlConcept,
   XbrlFact,
@@ -270,4 +271,107 @@ export function extractMetrics(
     totalAssets: buildMetric(concepts, TOTAL_ASSETS_TAGS, ["USD"], filing, "instant"),
     totalLiabilities: buildMetric(concepts, TOTAL_LIABILITIES_TAGS, ["USD"], filing, "instant"),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Revenue/EPS history for the trend chart
+// ---------------------------------------------------------------------------
+
+const QUARTER_MIN_DAYS = 75;
+const QUARTER_MAX_DAYS = 105;
+const YEAR_MIN_DAYS = 340;
+const YEAR_MAX_DAYS = 390;
+
+function isQuarterly(f: XbrlFact): boolean {
+  if (!f.start) return false;
+  const d = daysBetween(f.start, f.end);
+  return d >= QUARTER_MIN_DAYS && d <= QUARTER_MAX_DAYS;
+}
+
+function isAnnual(f: XbrlFact): boolean {
+  if (!f.start) return false;
+  const d = daysBetween(f.start, f.end);
+  return d >= YEAR_MIN_DAYS && d <= YEAR_MAX_DAYS;
+}
+
+/** All facts of a duration class, de-duped per period end by latest filed. */
+function periodSeries(
+  facts: XbrlFact[] | undefined,
+  match: (f: XbrlFact) => boolean,
+): Map<string, XbrlFact> {
+  const byEnd = new Map<string, XbrlFact>();
+  for (const f of facts ?? []) {
+    if (!match(f)) continue;
+    const prev = byEnd.get(f.end);
+    if (!prev || f.filed > prev.filed) byEnd.set(f.end, f);
+  }
+  return byEnd;
+}
+
+/**
+ * Real revenue (+ diluted EPS where reported) history from the companyfacts
+ * response — the same response the headline metrics come from; no extra
+ * EDGAR calls. Uses the SAME concept tag that matched the current period,
+ * because companies switch tags over time (e.g. Apple's `Revenues` facts
+ * stop in 2018).
+ *
+ * Quarterly series when the latest filing is a 10-Q, annual when a 10-K.
+ * Companies file no 10-Q for their fiscal Q4, so a missing Q4 is filled by
+ * (annual − the three reported sibling quarters) when all four figures
+ * exist — deterministic arithmetic on EDGAR data, marked `revenueDerived`.
+ * EPS is never derived this way (per-share values aren't additive).
+ */
+export function extractHistory(
+  factsResponse: CompanyFactsResponse,
+  filing: FilingRef,
+  maxPoints = 8,
+): { history: HistoryPoint[]; historyKind: "quarterly" | "annual" } {
+  const concepts = factsResponse.facts["us-gaap"] ?? {};
+  const historyKind = filing.form === "10-Q" ? "quarterly" : "annual";
+
+  const revenueMatch = findFlowFact(concepts, REVENUE_TAGS, ["USD"], filing);
+  if (!revenueMatch) return { history: [], historyKind };
+  const revenueFacts = concepts[revenueMatch.tag]?.units[revenueMatch.unit];
+
+  const epsMatch = findFlowFact(concepts, DILUTED_EPS_TAGS, ["USD/shares"], filing);
+  const epsFacts = epsMatch ? concepts[epsMatch.tag]?.units[epsMatch.unit] : undefined;
+
+  const durationCheck = historyKind === "quarterly" ? isQuarterly : isAnnual;
+  const revenueByEnd = periodSeries(revenueFacts, durationCheck);
+  const epsByEnd = periodSeries(epsFacts, durationCheck);
+
+  const points = new Map<string, HistoryPoint>();
+  for (const [end, fact] of revenueByEnd) {
+    points.set(end, {
+      periodEnd: end,
+      revenue: fact.val,
+      eps: epsByEnd.get(end)?.val ?? null,
+      revenueDerived: false,
+    });
+  }
+
+  // Fill missing fiscal Q4s from the annual totals.
+  if (historyKind === "quarterly") {
+    const annualByEnd = periodSeries(revenueFacts, isAnnual);
+    for (const [annualEnd, annual] of annualByEnd) {
+      if (points.has(annualEnd) || !annual.start) continue;
+      const siblings = [...revenueByEnd.values()].filter(
+        (q) => q.start && q.start >= annual.start! && q.end <= annualEnd,
+      );
+      if (siblings.length !== 3) continue; // need exactly the three other quarters
+      const q4 = annual.val - siblings.reduce((sum, q) => sum + q.val, 0);
+      points.set(annualEnd, {
+        periodEnd: annualEnd,
+        revenue: q4,
+        eps: null,
+        revenueDerived: true,
+      });
+    }
+  }
+
+  const history = [...points.values()]
+    .sort((a, b) => (a.periodEnd < b.periodEnd ? -1 : 1))
+    .filter((p) => p.periodEnd <= filing.reportDate)
+    .slice(-maxPoints);
+  return { history, historyKind };
 }
