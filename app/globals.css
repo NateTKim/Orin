@@ -85,25 +85,26 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  /* Orin brand accent: deep blue/purple (indigo), lifted for dark mode */
-  --primary: oklch(0.66 0.16 279);
-  --primary-foreground: oklch(0.16 0.04 279);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.28 0.05 279);
-  --accent-foreground: oklch(0.9 0.04 279);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.66 0.16 279 / 55%);
+  /* Orin dark theme: deep near-black navy/charcoal with floating cards and
+     a vivid indigo-violet accent. Muted text is gray-blue, not gray. */
+  --background: oklch(0.16 0.015 265);
+  --foreground: oklch(0.93 0.01 260);
+  --card: oklch(0.2 0.018 265);
+  --card-foreground: oklch(0.93 0.01 260);
+  --popover: oklch(0.2 0.018 265);
+  --popover-foreground: oklch(0.93 0.01 260);
+  --primary: oklch(0.63 0.21 285);
+  --primary-foreground: oklch(0.98 0.01 285);
+  --secondary: oklch(0.25 0.02 265);
+  --secondary-foreground: oklch(0.93 0.01 260);
+  --muted: oklch(0.24 0.02 265);
+  --muted-foreground: oklch(0.63 0.03 260);
+  --accent: oklch(0.27 0.05 285);
+  --accent-foreground: oklch(0.88 0.06 285);
+  --destructive: oklch(0.68 0.19 22);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 13%);
+  --ring: oklch(0.63 0.21 285 / 55%);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);

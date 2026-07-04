@@ -11,6 +11,16 @@ export function formatUsd(value: number): string {
   return `${sign}$${abs.toLocaleString("en-US")}`;
 }
 
+/** Compact for stat cards and chart axes: "$111.2B", "-$416M", "$4.90T". */
+export function formatUsdCompact(value: number): string {
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(2)}T`;
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `${sign}$${Math.round(abs / 1e6)}M`;
+  return `${sign}$${abs.toLocaleString("en-US")}`;
+}
+
 /** Per-share amounts: "$2.01", "-$0.33". */
 export function formatPerShare(value: number): string {
   const sign = value < 0 ? "-" : "";

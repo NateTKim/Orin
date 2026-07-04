@@ -12,8 +12,9 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RevenueChart } from "@/components/revenue-chart";
 import { cn } from "@/lib/utils";
-import { formatPct, formatPerShare, formatUsd } from "@/lib/format.ts";
+import { formatPct, formatPerShare, formatUsd, formatUsdCompact } from "@/lib/format.ts";
 import type { FilingApiResponse, FilingApiSuccess } from "@/lib/api-types.ts";
 import type { MetricValue } from "@/lib/edgar/types.ts";
 
@@ -22,6 +23,10 @@ type ViewState =
   | { kind: "loading"; ticker: string }
   | { kind: "error"; message: string }
   | { kind: "result"; data: FilingApiSuccess };
+
+/* Floating-card treatment shared across the page. */
+const cardShell =
+  "rounded-2xl bg-gradient-to-b from-white/[0.03] to-transparent shadow-[0_8px_30px_rgba(0,0,0,0.35)]";
 
 export default function Home() {
   const [ticker, setTicker] = useState("");
@@ -40,43 +45,54 @@ export default function Home() {
     } catch {
       setView({
         kind: "error",
-        message: "Something went wrong fetching the filing. Please try again.",
+        message: "Something went wrong on our side. Please try again.",
       });
     }
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="mx-auto flex w-full max-w-2xl flex-col gap-10 px-6 py-16 sm:py-20">
-        <header className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-primary">Orin</h1>
-          <p className="max-w-md text-[15px] leading-6 text-muted-foreground">
-            SEC filings, explained in plain English. Type a ticker to see a company&apos;s
-            latest 10-Q or 10-K with the real numbers.
-          </p>
+    <div className="relative min-h-screen overflow-x-clip bg-background">
+      {/* Soft accent glow behind the header */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(50%_60%_at_50%_0%,--theme(--color-primary/14%),transparent_70%)]"
+      />
+      <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-14 sm:py-16">
+        <header className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <h1 className="text-3xl font-semibold tracking-tight text-primary">Orin</h1>
+            <p className="max-w-md text-[15px] leading-6 text-muted-foreground">
+              Company reports, explained in plain English — with the real numbers and the
+              things most people miss.
+            </p>
+          </div>
+          <form onSubmit={lookup} className="flex gap-2">
+            <Input
+              value={ticker}
+              onChange={(e) => setTicker(e.target.value)}
+              placeholder="Ticker, e.g. AAPL"
+              aria-label="Stock ticker"
+              maxLength={10}
+              className="h-11 max-w-48 rounded-xl border-white/10 bg-card text-base shadow-inner"
+            />
+            <Button
+              type="submit"
+              size="lg"
+              className="h-11 rounded-xl px-5 shadow-[0_0_24px_-6px_var(--color-primary)]"
+              disabled={view.kind === "loading"}
+            >
+              {view.kind === "loading" ? "Reading…" : "Explain it"}
+            </Button>
+          </form>
         </header>
-
-        <form onSubmit={lookup} className="flex gap-2">
-          <Input
-            value={ticker}
-            onChange={(e) => setTicker(e.target.value)}
-            placeholder="Ticker, e.g. AAPL"
-            aria-label="Stock ticker"
-            maxLength={10}
-            className="h-10 max-w-48 bg-card text-base"
-          />
-          <Button type="submit" size="lg" className="h-10 px-4" disabled={view.kind === "loading"}>
-            {view.kind === "loading" ? "Reading…" : "Explain it"}
-          </Button>
-        </form>
 
         {view.kind === "loading" && <LoadingState ticker={view.ticker} />}
         {view.kind === "error" && <ErrorState message={view.message} />}
         {view.kind === "result" && <Results data={view.data} />}
 
-        <footer className="border-t pt-6 text-xs leading-5 text-muted-foreground">
-          Figures come directly from SEC EDGAR data. Commentary is AI-written from the
-          filing itself, using only those figures. Not investment advice.
+        <footer className="border-t border-white/[0.06] pt-6 text-xs leading-5 text-muted-foreground">
+          All numbers come straight from the company&apos;s official SEC report. The
+          explanations are AI-written using only those numbers. Not investment advice.
         </footer>
       </main>
     </div>
@@ -89,31 +105,58 @@ function LoadingState({ ticker }: { ticker: string }) {
   return (
     <div className="flex flex-col gap-6" aria-live="polite">
       <p className="text-sm text-muted-foreground">
-        Reading {ticker}&apos;s latest filing from SEC EDGAR and writing the explanation —
-        this takes up to a minute.
+        Reading {ticker}&apos;s latest report and writing the explanation — this takes up
+        to a minute.
       </p>
-      <Card>
+      {/* Header skeleton */}
+      <Card className={cardShell}>
         <CardContent className="flex flex-col gap-3 py-2">
-          <Skeleton className="h-7 w-64" />
-          <Skeleton className="h-4 w-72" />
+          <Skeleton className="h-7 w-64 bg-white/[0.06]" />
+          <Skeleton className="h-4 w-80 bg-white/[0.06]" />
         </CardContent>
       </Card>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Card key={i}>
+      {/* Grid skeleton mirroring the result layout */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        <div className="flex flex-col gap-6 lg:col-span-3">
+          <div className="rounded-2xl border border-primary/20 bg-card p-6 shadow-[0_0_50px_-18px_var(--color-primary)]">
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-9 rounded-xl bg-primary/15" />
+              <Skeleton className="h-6 w-56 bg-white/[0.07]" />
+            </div>
+            <div className="mt-6 flex flex-col gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-xl bg-white/[0.03] p-4">
+                  <Skeleton className="h-4 w-full bg-white/[0.06]" />
+                  <Skeleton className="mt-2 h-4 w-4/5 bg-white/[0.06]" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-col gap-3">
+            <Skeleton className="h-5 w-36 bg-white/[0.06]" />
+            <Skeleton className="h-4 w-full bg-white/[0.06]" />
+            <Skeleton className="h-4 w-full bg-white/[0.06]" />
+            <Skeleton className="h-4 w-3/4 bg-white/[0.06]" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-6 lg:col-span-2">
+          <div className="grid grid-cols-3 gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i} className={cardShell}>
+                <CardContent className="flex flex-col gap-2 py-1">
+                  <Skeleton className="h-3 w-12 bg-white/[0.06]" />
+                  <Skeleton className="h-6 w-16 bg-white/[0.06]" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <Card className={cardShell}>
             <CardContent className="flex flex-col gap-3 py-2">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-7 w-28" />
-              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-4 w-32 bg-white/[0.06]" />
+              <Skeleton className="h-44 w-full bg-white/[0.05]" />
             </CardContent>
           </Card>
-        ))}
-      </div>
-      <div className="flex flex-col gap-3 pt-2">
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-4/5" />
+        </div>
       </div>
     </div>
   );
@@ -123,11 +166,13 @@ function LoadingState({ ticker }: { ticker: string }) {
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <Card className="border-destructive/30 bg-destructive/5">
+    <Card className={cn(cardShell, "max-w-2xl border-destructive/20 ring-destructive/20")}>
       <CardContent className="flex items-start gap-3 py-1">
-        <AlertCircle className="mt-0.5 size-5 shrink-0 text-destructive" aria-hidden />
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive/15">
+          <AlertCircle className="size-4 text-destructive" aria-hidden />
+        </span>
         <div className="flex flex-col gap-1">
-          <p className="text-sm font-medium">We couldn&apos;t fetch that filing</p>
+          <p className="text-sm font-medium">We couldn&apos;t find that one</p>
           <p className="text-sm leading-6 text-muted-foreground">{message}</p>
         </div>
       </CardContent>
@@ -151,124 +196,198 @@ function Results({ data }: { data: FilingApiSuccess }) {
   const { snapshot, summary, summaryNote } = data;
   const m = snapshot.metrics;
   const sections = parseSummary(summary ?? "");
+  const periodWord = snapshot.form === "10-Q" ? "quarter" : "fiscal year";
+  const hasDerivedPoint = snapshot.history.some((p) => p.revenueDerived);
 
   return (
-    <div className="flex flex-col gap-10">
-      {/* Header card */}
-      <Card>
-        <CardContent className="flex flex-col gap-2 py-2">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <h2 className="text-2xl font-semibold tracking-tight">{snapshot.companyName}</h2>
-            <span className="rounded-md bg-primary/10 px-2 py-0.5 text-sm font-medium tracking-wide text-primary">
-              {snapshot.ticker}
-            </span>
+    <div className="flex flex-col gap-6">
+      {/* Header card — full width */}
+      <Card className={cardShell}>
+        <CardContent className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 py-2">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h2 className="text-2xl font-semibold tracking-tight">
+                {snapshot.companyName}
+              </h2>
+              <span className="rounded-md bg-primary/15 px-2 py-0.5 text-sm font-medium tracking-wide text-accent-foreground">
+                {snapshot.ticker}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Latest report ({snapshot.form}) · covers the {periodWord} ended{" "}
+              {formatDate(snapshot.periodEnd)} · published {formatDate(snapshot.filedDate)}
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {snapshot.form} · fiscal period ended {formatDate(snapshot.periodEnd)} · filed{" "}
-            {formatDate(snapshot.filedDate)}
-          </p>
+          <a
+            href={snapshot.filingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "gap-2 rounded-xl border-white/10 bg-background/40",
+            )}
+          >
+            Read the official report
+            <ExternalLink className="size-3.5" aria-hidden />
+          </a>
         </CardContent>
       </Card>
 
-      {/* Key numbers */}
-      <section className="flex flex-col gap-4" aria-label="Key numbers">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <StatCard
-            label="Revenue"
-            value={m.revenue.value !== null ? formatUsd(m.revenue.value) : null}
-            change={m.revenue.yoyPct}
-            changeLabel="vs. last year"
-          />
-          <StatCard
-            label="Year over year"
-            value={m.revenue.yoyPct !== null ? formatPct(m.revenue.yoyPct) : null}
-            change={m.revenue.yoyPct}
-            changeLabel="revenue growth"
-            emphasizeChangeColor
-          />
-          <StatCard
-            label="Diluted EPS"
-            value={m.dilutedEps.value !== null ? formatPerShare(m.dilutedEps.value) : null}
-            change={m.dilutedEps.yoyPct}
-            changeLabel="vs. last year"
-          />
-        </div>
-        <SecondaryMetrics metrics={m} />
-      </section>
-
-      {/* Plain-English summary */}
-      <section className="flex flex-col gap-3" aria-label="Plain-English summary">
-        <h2 className="text-lg font-semibold tracking-tight">In plain English</h2>
-        {summary ? (
-          <div className="flex flex-col gap-4">
-            {sections.intro.map((p, i) => (
-              <p key={i} className="text-[15px] leading-7 text-foreground/90">
-                {p}
-              </p>
-            ))}
-            {sections.notable.length > 0 && (
-              <div className="flex flex-col gap-2 pt-1">
-                <h3 className="text-sm font-semibold">Notable changes</h3>
-                <ul className="flex flex-col gap-2">
-                  {sections.notable.map((b, i) => (
-                    <li key={i} className="flex gap-2.5 text-[15px] leading-7 text-foreground/90">
-                      <span
-                        className="mt-[13px] size-1.5 shrink-0 rounded-full bg-primary/60"
-                        aria-hidden
-                      />
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className="text-sm leading-6 text-muted-foreground">
-            {summaryNote ?? "The summary is unavailable."}
-          </p>
-        )}
-      </section>
-
-      {/* Signature: what management may be downplaying */}
-      {sections.downplaying.length > 0 && (
-        <section aria-label="What management may be downplaying">
-          <div className="rounded-xl border border-primary/25 bg-gradient-to-br from-primary/[0.08] via-primary/[0.04] to-transparent p-6">
-            <div className="flex items-center gap-2.5">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary/15">
-                <Eye className="size-4 text-primary" aria-hidden />
+      {/* Bento grid: insights + summary in the primary column, numbers in the
+          secondary column. Single column on mobile, insights first. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5 lg:grid-rows-[auto_1fr]">
+        {/* HERO — the reason the app exists */}
+        <section
+          aria-label="What most people miss"
+          className="lg:col-span-3 lg:col-start-1 lg:row-start-1"
+        >
+          <div className="relative h-full overflow-hidden rounded-2xl border border-primary/30 bg-card p-6 shadow-[0_0_60px_-15px_var(--color-primary)] sm:p-8">
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_60%_at_20%_0%,--theme(--color-primary/18%),transparent_60%)]"
+            />
+            <div className="relative flex items-center gap-3">
+              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/40">
+                <Eye className="size-5 text-accent-foreground" aria-hidden />
               </span>
-              <h2 className="text-lg font-semibold tracking-tight text-primary">
-                What management may be downplaying
-              </h2>
+              <div className="flex flex-col">
+                <h2 className="text-xl font-semibold tracking-tight">
+                  What most people miss
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Things this report mentions quietly that deserve your attention
+                </p>
+              </div>
             </div>
-            <ul className="mt-4 flex flex-col gap-3">
-              {sections.downplaying.map((b, i) => (
-                <li key={i} className="flex gap-2.5 text-[15px] leading-7">
-                  <span className="mt-[13px] size-1.5 shrink-0 rounded-full bg-primary" aria-hidden />
-                  {b}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-xs leading-5 text-muted-foreground">
-              An AI reading of the filing&apos;s own discussion — worth a closer look, not a
-              verdict.
+
+            {sections.downplaying.length > 0 ? (
+              <ol className="relative mt-6 flex flex-col gap-4">
+                {sections.downplaying.map((b, i) => (
+                  <li
+                    key={i}
+                    className="flex gap-4 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.05]"
+                  >
+                    <span
+                      className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-[13px] font-semibold tabular-nums text-accent-foreground"
+                      aria-hidden
+                    >
+                      {i + 1}
+                    </span>
+                    <p className="max-w-[62ch] text-[15px] leading-7 text-foreground/90">{b}</p>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="relative mt-6 text-sm leading-6 text-muted-foreground">
+                {summaryNote ?? "We couldn't produce insights for this report."}
+              </p>
+            )}
+
+            <p className="relative mt-5 text-xs leading-5 text-muted-foreground">
+              Our AI&apos;s reading of the report&apos;s own wording — a starting point for
+              questions, not a verdict.
             </p>
           </div>
         </section>
-      )}
 
-      {/* Source */}
-      <div>
-        <a
-          href={snapshot.filingUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-2")}
+        {/* Secondary column: the numbers */}
+        <div className="flex flex-col gap-6 lg:col-span-2 lg:col-start-4 lg:row-span-2 lg:row-start-1">
+          <div className="grid grid-cols-3 gap-3">
+            <StatCard
+              label="Revenue"
+              explain="money brought in"
+              value={m.revenue.value !== null ? formatUsdCompact(m.revenue.value) : null}
+              change={m.revenue.yoyPct}
+            />
+            <StatCard
+              label="Growth"
+              explain="vs. a year ago"
+              value={m.revenue.yoyPct !== null ? formatPct(m.revenue.yoyPct) : null}
+              change={m.revenue.yoyPct}
+              emphasizeChangeColor
+            />
+            <StatCard
+              label="EPS"
+              explain="profit per share"
+              value={m.dilutedEps.value !== null ? formatPerShare(m.dilutedEps.value) : null}
+              change={m.dilutedEps.yoyPct}
+            />
+          </div>
+
+          {snapshot.history.length >= 2 && (
+            <Card className={cardShell}>
+              <CardContent className="flex flex-col gap-4 py-2">
+                <div className="flex flex-col gap-0.5">
+                  <h2 className="text-base font-semibold tracking-tight">Revenue trend</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Last {snapshot.history.length}{" "}
+                    {snapshot.historyKind === "quarterly" ? "quarters" : "years"} — real
+                    SEC figures
+                  </p>
+                </div>
+                <RevenueChart history={snapshot.history} />
+                {hasDerivedPoint && (
+                  <p className="text-[11px] leading-4 text-muted-foreground/80">
+                    Companies don&apos;t file a separate fourth-quarter report, so those
+                    points are calculated from the annual total minus the three reported
+                    quarters.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className={cardShell}>
+            <CardContent className="py-2">
+              <h2 className="text-base font-semibold tracking-tight">More numbers</h2>
+              <SecondaryMetrics metrics={m} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Plain-English summary — under the hero in the primary column */}
+        <section
+          aria-label="Plain-English summary"
+          className="lg:col-span-3 lg:col-start-1 lg:row-start-2"
         >
-          Read the full filing on sec.gov
-          <ExternalLink className="size-3.5" aria-hidden />
-        </a>
+          <Card className={cn(cardShell, "h-full")}>
+            <CardContent className="flex flex-col gap-4 py-2">
+              <h2 className="text-lg font-semibold tracking-tight">In plain English</h2>
+              {summary ? (
+                <div className="flex flex-col gap-4">
+                  {sections.intro.map((p, i) => (
+                    <p key={i} className="max-w-[68ch] text-[15px] leading-7 text-foreground/90">
+                      {p}
+                    </p>
+                  ))}
+                  {sections.notable.length > 0 && (
+                    <div className="flex flex-col gap-2 pt-1">
+                      <h3 className="text-sm font-semibold">What changed since last year</h3>
+                      <ul className="flex flex-col gap-2">
+                        {sections.notable.map((b, i) => (
+                          <li
+                            key={i}
+                            className="flex max-w-[68ch] gap-2.5 text-[15px] leading-7 text-foreground/90"
+                          >
+                            <span
+                              className="mt-[13px] size-1.5 shrink-0 rounded-full bg-primary/60"
+                              aria-hidden
+                            />
+                            {b}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm leading-6 text-muted-foreground">
+                  {summaryNote ?? "The explanation is unavailable right now."}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </section>
       </div>
     </div>
   );
@@ -278,68 +397,88 @@ function Results({ data }: { data: FilingApiSuccess }) {
 
 function StatCard({
   label,
+  explain,
   value,
   change,
-  changeLabel,
   emphasizeChangeColor = false,
 }: {
   label: string;
+  explain: string;
   value: string | null;
   change: number | null;
-  changeLabel: string;
   emphasizeChangeColor?: boolean;
 }) {
   const up = change !== null && change >= 0;
-  const changeColor = up
-    ? "text-emerald-600 dark:text-emerald-400"
-    : "text-red-600 dark:text-red-400";
+  const changeColor = up ? "text-emerald-400" : "text-red-400";
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-1 py-2">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {label}
-        </span>
+    <Card className={cardShell}>
+      <CardContent className="flex flex-col gap-1 px-3 py-1">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            {label}
+          </span>
+          {change !== null &&
+            (up ? (
+              <ArrowUpRight className={cn("size-3.5", changeColor)} aria-hidden />
+            ) : (
+              <ArrowDownRight className={cn("size-3.5", changeColor)} aria-hidden />
+            ))}
+        </div>
         {value === null ? (
-          <span className="text-lg text-muted-foreground">not reported</span>
+          <span className="text-sm text-muted-foreground">not reported</span>
         ) : (
           <span
             className={cn(
-              "text-2xl font-semibold tracking-tight tabular-nums",
+              "text-xl font-bold tracking-tight tabular-nums sm:text-2xl",
               emphasizeChangeColor && change !== null && changeColor,
             )}
           >
             {value}
           </span>
         )}
-        {change !== null && (
-          <span className={cn("flex items-center gap-1 text-xs font-medium", changeColor)}>
-            {up ? (
-              <ArrowUpRight className="size-3.5" aria-hidden />
-            ) : (
-              <ArrowDownRight className="size-3.5" aria-hidden />
-            )}
-            {changeLabel}
-          </span>
-        )}
+        <span className="text-[11px] leading-4 text-muted-foreground/70">{explain}</span>
       </CardContent>
     </Card>
   );
 }
 
 function SecondaryMetrics({ metrics }: { metrics: FilingApiSuccess["snapshot"]["metrics"] }) {
-  const rows: Array<{ label: string; metric: MetricValue; fmt: (v: number) => string }> = [
-    { label: "Net income", metric: metrics.netIncome, fmt: formatUsd },
-    { label: "Operating income", metric: metrics.operatingIncome, fmt: formatUsd },
-    { label: "Gross margin", metric: metrics.grossMarginPct, fmt: (v) => formatPct(v, false) },
-    { label: "Total assets", metric: metrics.totalAssets, fmt: formatUsd },
-    { label: "Total liabilities", metric: metrics.totalLiabilities, fmt: formatUsd },
+  const rows: Array<{
+    label: string;
+    explain: string;
+    metric: MetricValue;
+    fmt: (v: number) => string;
+  }> = [
+    { label: "Net income", explain: "profit after all costs", metric: metrics.netIncome, fmt: formatUsd },
+    {
+      label: "Operating income",
+      explain: "profit from day-to-day business",
+      metric: metrics.operatingIncome,
+      fmt: formatUsd,
+    },
+    {
+      label: "Gross margin",
+      explain: "share of sales kept after direct costs",
+      metric: metrics.grossMarginPct,
+      fmt: (v) => formatPct(v, false),
+    },
+    { label: "Total assets", explain: "everything the company owns", metric: metrics.totalAssets, fmt: formatUsd },
+    {
+      label: "Total liabilities",
+      explain: "everything it owes",
+      metric: metrics.totalLiabilities,
+      fmt: formatUsd,
+    },
   ];
   return (
-    <dl className="flex flex-wrap gap-x-8 gap-y-2 px-1 text-sm">
-      {rows.map(({ label, metric, fmt }) => (
-        <div key={label} className="flex items-baseline gap-2">
-          <dt className="text-muted-foreground">{label}</dt>
-          <dd className="font-medium tabular-nums">
+    <dl className="mt-3 flex flex-col divide-y divide-white/[0.05]">
+      {rows.map(({ label, explain, metric, fmt }) => (
+        <div key={label} className="flex items-baseline justify-between gap-4 py-2.5">
+          <dt className="flex flex-col">
+            <span className="text-sm text-foreground/80">{label}</span>
+            <span className="text-[11px] leading-4 text-muted-foreground/70">{explain}</span>
+          </dt>
+          <dd className="text-sm font-medium tabular-nums">
             {metric.value === null ? (
               <span className="font-normal text-muted-foreground/70">not reported</span>
             ) : (
@@ -361,8 +500,9 @@ interface SummarySections {
 }
 
 /**
- * Splits the plain-text summary into its three sections. Tolerates missing
- * sections (e.g. responses generated before the downplaying section existed).
+ * Splits the plain-text summary into its three sections. The model still
+ * emits the heading "What management may be downplaying"; the UI renames it.
+ * Tolerates missing sections.
  */
 function parseSummary(text: string): SummarySections {
   const sections: SummarySections = { intro: [], notable: [], downplaying: [] };

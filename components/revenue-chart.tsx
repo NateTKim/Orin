@@ -1,0 +1,102 @@
+"use client";
+
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { formatPerShare, formatUsd, formatUsdCompact } from "@/lib/format.ts";
+import type { HistoryPoint } from "@/lib/edgar/types.ts";
+
+interface ChartDatum {
+  label: string;
+  revenue: number;
+  eps: number | null;
+  derived: boolean;
+}
+
+function periodLabel(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  const month = d.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+  const year = d.getUTCFullYear().toString().slice(2);
+  return `${month} '${year}`;
+}
+
+function ChartTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: ChartDatum }>;
+}) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="rounded-lg border border-white/10 bg-popover px-3 py-2 text-xs shadow-xl">
+      <p className="font-medium text-foreground">{d.label}</p>
+      <p className="mt-1 tabular-nums text-foreground">
+        {formatUsd(d.revenue)}
+        {d.derived && <span className="text-muted-foreground"> · calculated</span>}
+      </p>
+      {d.eps !== null && (
+        <p className="mt-0.5 tabular-nums text-muted-foreground">
+          {formatPerShare(d.eps)} profit per share
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function RevenueChart({ history }: { history: HistoryPoint[] }) {
+  const data: ChartDatum[] = history.map((p) => ({
+    label: periodLabel(p.periodEnd),
+    revenue: p.revenue,
+    eps: p.eps,
+    derived: p.revenueDerived,
+  }));
+
+  return (
+    <div className="h-52 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 4 }}>
+          <defs>
+            <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.06)" />
+          <XAxis
+            dataKey="label"
+            tickLine={false}
+            axisLine={false}
+            tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
+            dy={6}
+          />
+          <YAxis
+            width={52}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={(v: number) => formatUsdCompact(v)}
+            tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
+            domain={["auto", "auto"]}
+          />
+          <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(255,255,255,0.15)" }} />
+          <Area
+            type="monotone"
+            dataKey="revenue"
+            stroke="var(--color-primary)"
+            strokeWidth={2}
+            fill="url(#revenueFill)"
+            dot={false}
+            activeDot={{ r: 4, strokeWidth: 0 }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
