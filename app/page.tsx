@@ -11,6 +11,7 @@ import {
   Search,
   Sparkles,
 } from "lucide-react";
+import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -80,13 +81,16 @@ export default function Home() {
           >
             Orin
           </button>
-          <SearchForm
-            ticker={ticker}
-            setTicker={setTicker}
-            onSubmit={lookup}
-            loading={view.kind === "loading"}
-            variant="compact"
-          />
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <SearchForm
+              ticker={ticker}
+              setTicker={setTicker}
+              onSubmit={lookup}
+              loading={view.kind === "loading"}
+              variant="compact"
+            />
+            <AuthControls />
+          </div>
         </header>
 
         {view.kind === "loading" && <LoadingState ticker={view.ticker} />}
@@ -98,6 +102,45 @@ export default function Home() {
           explanations are AI-written using only those numbers. Not investment advice.
         </footer>
       </main>
+    </div>
+  );
+}
+
+/* ------------------------------ auth controls ---------------------------- */
+
+/**
+ * Logged out: "Sign in" + "Create account" (Clerk opens a themed modal — no
+ * separate pages needed). Logged in: Clerk's account menu, which handles
+ * profile and sign-out. Nothing here gates the app.
+ *
+ * We use the client hook `useUser()` to branch on auth state, because Clerk
+ * v7's <Show> control component is server-only and this page is a client
+ * component. While Clerk is still loading we render a small placeholder to
+ * avoid a flash of the wrong control.
+ */
+function AuthControls() {
+  const { isLoaded, isSignedIn } = useUser();
+
+  if (!isLoaded) {
+    return <div aria-hidden className="size-8 rounded-full bg-white/5" />;
+  }
+
+  if (isSignedIn) {
+    return <UserButton appearance={{ elements: { userButtonAvatarBox: "h-8 w-8" } }} />;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <SignInButton mode="modal">
+        <button className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "rounded-lg")}>
+          Sign in
+        </button>
+      </SignInButton>
+      <SignUpButton mode="modal">
+        <button className={cn(buttonVariants({ size: "sm" }), "rounded-lg")}>
+          Create account
+        </button>
+      </SignUpButton>
     </div>
   );
 }
@@ -159,8 +202,13 @@ function Landing({
 }) {
   return (
     <div className="flex flex-col">
+      {/* Slim top bar — just the account control, so the hero stays the focus */}
+      <header className="flex items-center justify-end px-6 py-5">
+        <AuthControls />
+      </header>
+
       {/* Hero */}
-      <section className="relative flex flex-col items-center px-6 pt-24 pb-16 text-center sm:pt-32 sm:pb-24">
+      <section className="relative flex flex-col items-center px-6 pt-16 pb-16 text-center sm:pt-20 sm:pb-24">
         {/* One tasteful centerpiece: a soft indigo glow that breathes behind
             the headline (see .orin-hero-glow in globals.css). */}
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
