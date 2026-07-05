@@ -64,6 +64,7 @@ export async function buildSnapshot(cik: CikResult, filing: FilingRef): Promise<
     companyName: cik.name,
     cik: cik.cik,
     form: filing.form,
+    accessionNumber: filing.accessionNumber,
     periodEnd: filing.reportDate,
     filedDate: filing.filedDate,
     filingUrl: filing.documentUrl,
