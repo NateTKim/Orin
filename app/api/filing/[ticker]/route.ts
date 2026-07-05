@@ -51,6 +51,10 @@ export async function GET(
   // and skip the company facts, the filing-text download, and the Claude call.
   const cached = await getCachedFiling(filing.accessionNumber);
   if (cached) {
+    // Entries cached before the accessionNumber field existed won't carry it;
+    // the accession we just resolved IS the cache key, so set it either way so
+    // the Save button always has the filing's unique ID.
+    cached.snapshot.accessionNumber = filing.accessionNumber;
     console.log(`[cache HIT] ${cik.ticker} ${filing.form} ${filing.accessionNumber}`);
     return NextResponse.json(cached, { headers: { "x-orin-cache": "HIT" } });
   }

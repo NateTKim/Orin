@@ -132,6 +132,8 @@ export interface FilingSnapshot {
   companyName: string;
   cik: string;
   form: "10-Q" | "10-K";
+  /** SEC accession number — the unique ID of this specific filing. */
+  accessionNumber: string;
   /** Fiscal period end the figures cover, YYYY-MM-DD. */
   periodEnd: string;
   filedDate: string;
