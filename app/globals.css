@@ -4,6 +4,65 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ---------------------------------------------------------------------------
+   Orin design tokens — warm redesign, Pass 1 (see DESIGN.md).
+
+   Raw scales live in @theme and are available as Tailwind utilities
+   (bg-brand-600, text-sand-500, text-up, shadow-card, font-display, …).
+   The semantic shadcn tokens in :root map onto them — components should
+   prefer the semantic names (bg-background, text-muted-foreground, …).
+
+   The old dark theme is preserved verbatim under `.dark`: the not-yet-
+   restyled app screens (results, dashboard, discover) opt into it with a
+   `dark` wrapper class so they render unchanged until Pass 2.
+--------------------------------------------------------------------------- */
+
+@theme {
+  /* Brand — a warm cornflower blue (oklch hue 266): trustworthy like a
+     finance blue, but softened toward periwinkle so it feels human. Clearly
+     distinct from the old violet (hue 279–285). brand-600 is the primary. */
+  --color-brand-50: oklch(0.972 0.012 266);
+  --color-brand-100: oklch(0.945 0.028 266);
+  --color-brand-200: oklch(0.89 0.058 266);
+  --color-brand-300: oklch(0.81 0.095 266);
+  --color-brand-400: oklch(0.71 0.14 266);
+  --color-brand-500: oklch(0.62 0.17 266);
+  --color-brand-600: oklch(0.545 0.19 266); /* ≈ #3b64dd — the Orin blue */
+  --color-brand-700: oklch(0.47 0.17 267);
+  --color-brand-800: oklch(0.41 0.14 267);
+  --color-brand-900: oklch(0.36 0.11 267);
+  --color-brand-950: oklch(0.27 0.075 267);
+
+  /* Sand — a warm gray for text and surfaces. sand-50 is the paper-like
+     app base; sand-900 is body text (15:1 on the base). */
+  --color-sand-50: oklch(0.985 0.006 80); /* ≈ #fcfaf6 — app background */
+  --color-sand-100: oklch(0.965 0.008 80);
+  --color-sand-200: oklch(0.925 0.01 80);
+  --color-sand-300: oklch(0.87 0.012 78);
+  --color-sand-400: oklch(0.7 0.015 75);
+  --color-sand-500: oklch(0.55 0.016 70); /* muted text — 4.7:1 on sand-50 */
+  --color-sand-600: oklch(0.51 0.016 65);
+  --color-sand-700: oklch(0.44 0.015 60);
+  --color-sand-800: oklch(0.34 0.014 55);
+  --color-sand-900: oklch(0.25 0.012 50); /* body text */
+  --color-sand-950: oklch(0.19 0.01 45);
+
+  /* Financial direction — classic green/red, tuned to sit calmly on warm
+     light surfaces (both ≈ 5.2:1 on white; AA for text). */
+  --color-up: oklch(0.52 0.12 150); /* ≈ #287c42 */
+  --color-down: oklch(0.55 0.19 27); /* ≈ #c9302d */
+
+  /* Soft warm shadows — shadow color is a warm brown, never pure black. */
+  --shadow-card: 0 1px 2px oklch(0.25 0.02 60 / 4%),
+    0 4px 16px -4px oklch(0.25 0.02 60 / 7%);
+  --shadow-card-lg: 0 2px 4px oklch(0.25 0.02 60 / 4%),
+    0 16px 40px -12px oklch(0.25 0.02 60 / 14%);
+
+  /* Display face (Fraunces, loaded in app/layout.tsx) for landing headlines
+     and brand moments. Body/UI text stays Inter (--font-sans). */
+  --font-display: var(--font-serif), ui-serif, Georgia, serif;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -49,44 +108,47 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  /* Orin brand accent: deep blue/purple (indigo) */
-  --primary: oklch(0.44 0.19 279);
-  --primary-foreground: oklch(0.985 0.005 279);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.955 0.02 279);
-  --accent-foreground: oklch(0.35 0.16 279);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.44 0.19 279 / 55%);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Warm light theme — the new Orin default. Paper-warm base, near-white
+     cards floating above it, cornflower-blue accent. */
+  --background: var(--color-sand-50);
+  --foreground: var(--color-sand-900);
+  --card: oklch(0.998 0.002 85); /* a breath above the base, still warm */
+  --card-foreground: var(--color-sand-900);
+  --popover: oklch(0.998 0.002 85);
+  --popover-foreground: var(--color-sand-900);
+  --primary: var(--color-brand-600);
+  --primary-foreground: oklch(0.99 0.005 266);
+  --secondary: var(--color-sand-100);
+  --secondary-foreground: var(--color-sand-800);
+  --muted: var(--color-sand-100);
+  --muted-foreground: var(--color-sand-500);
+  --accent: var(--color-brand-50);
+  --accent-foreground: var(--color-brand-700);
+  --destructive: var(--color-down);
+  --border: var(--color-sand-200);
+  --input: var(--color-sand-300);
+  --ring: oklch(0.545 0.19 266 / 45%);
+  --chart-1: var(--color-brand-600);
+  --chart-2: var(--color-up);
+  --chart-3: oklch(0.78 0.13 75); /* warm amber */
+  --chart-4: var(--color-brand-300);
+  --chart-5: var(--color-sand-400);
+  --radius: 0.75rem; /* rounded + friendly */
+  --sidebar: oklch(0.998 0.002 85);
+  --sidebar-foreground: var(--color-sand-900);
+  --sidebar-primary: var(--color-brand-600);
+  --sidebar-primary-foreground: oklch(0.99 0.005 266);
+  --sidebar-accent: var(--color-sand-100);
+  --sidebar-accent-foreground: var(--color-sand-800);
+  --sidebar-border: var(--color-sand-200);
+  --sidebar-ring: var(--color-brand-400);
 }
 
 .dark {
-  /* Orin dark theme: deep near-black navy/charcoal with floating cards and
-     a vivid indigo-violet accent. Muted text is gray-blue, not gray. */
+  /* LEGACY — the pre-redesign dark theme, kept byte-for-byte so the app
+     screens that haven't been restyled yet (results, dashboard, discover)
+     look exactly as before. Pass 2 removes this along with the `dark`
+     wrappers on those screens. */
   --background: oklch(0.16 0.015 265);
   --foreground: oklch(0.93 0.01 260);
   --card: oklch(0.2 0.018 265);
@@ -110,6 +172,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem; /* the old, slightly tighter radius */
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -132,28 +195,38 @@
   }
 }
 
-/* Landing hero: one tasteful centerpiece — a soft indigo glow that slowly
-   breathes and drifts behind the headline. GPU-friendly (transform + opacity
-   only) and disabled for users who prefer reduced motion. */
-@keyframes orin-hero-glow {
-  0%,
-  100% {
-    transform: translate(-50%, 0) scale(1);
-    opacity: 0.72;
-  }
-  50% {
-    transform: translate(-50%, 3%) scale(1.12);
-    opacity: 1;
-  }
+/* Landing backdrop: a static "sunrise" — a full dawn-sky wash. The linear
+   gradient is the sky itself (cornflower blue at the top, through rose, into
+   peach and gold at the horizon); the radials add the sun's glow and warm
+   flanks. Pure CSS (no images, no animation), masked so it dissolves into
+   the paper background with no hard edge. Cheap on mobile by construction. */
+.orin-sunrise {
+  background:
+    /* sun glow — centered low, behind the search pill */
+    radial-gradient(52% 36% at 50% 62%, oklch(0.955 0.07 75 / 90%), transparent 72%),
+    /* rose flank (left) and peach flank (right) */
+    radial-gradient(60% 48% at 14% 18%, oklch(0.92 0.05 15 / 65%), transparent 72%),
+    radial-gradient(58% 44% at 86% 24%, oklch(0.93 0.065 50 / 70%), transparent 72%),
+    /* the sky: blue → rose → peach → gold → paper */
+    linear-gradient(
+      to bottom,
+      oklch(0.865 0.065 266) 0%,
+      oklch(0.905 0.045 355 / 75%) 26%,
+      oklch(0.93 0.055 30 / 70%) 48%,
+      oklch(0.95 0.06 70 / 65%) 70%,
+      oklch(0.975 0.035 85 / 45%) 88%,
+      transparent 100%
+    );
+  mask-image: linear-gradient(to bottom, black 58%, transparent 100%);
 }
 
-.orin-hero-glow {
-  animation: orin-hero-glow 8s ease-in-out infinite;
-  will-change: transform, opacity;
+/* Companion layers for the sunrise scene (see the Landing hero backdrop).
+   Both are masked so they dissolve into the sky/paper — no hard edges. */
+.orin-horizon {
+  /* mountain silhouettes: peaks crisp, bases melting into morning haze */
+  mask-image: linear-gradient(to bottom, black 45%, transparent 98%);
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .orin-hero-glow {
-    animation: none;
-  }
+.orin-stars {
+  /* stars fade out as the sky brightens toward the horizon */
+  mask-image: linear-gradient(to bottom, black 30%, transparent 85%);
 }

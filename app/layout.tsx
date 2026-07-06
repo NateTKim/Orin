@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+// Display serif for landing headlines and brand moments (font-display token).
+// Body and UI text stay Inter.
+const fraunces = Fraunces({
+  variable: "--font-serif",
   subsets: ["latin"],
 });
 
@@ -22,20 +28,19 @@ export default function RootLayout({
 }>) {
   return (
     // ClerkProvider makes auth state available everywhere. `appearance` themes
-    // Clerk's built-in UI (sign-in modal, account menu) to our dark theme with
-    // the Orin indigo accent, so it feels native rather than bolted on.
+    // Clerk's built-in UI (sign-in modal, account menu) to the warm-light Orin
+    // brand. The not-yet-restyled app screens opt back into the legacy dark
+    // theme with a `dark` wrapper class (removed in Pass 2 of the redesign).
     <ClerkProvider
       appearance={{
-        theme: dark,
         variables: {
-          colorPrimary: "#7c5cff",
-          colorBackground: "#12131a",
+          colorPrimary: "#3b64dd",
           borderRadius: "0.75rem",
           fontFamily: "var(--font-sans)",
         },
       }}
     >
-      <html lang="en" className={`${inter.variable} dark h-full antialiased`}>
+      <html lang="en" className={`${inter.variable} ${fraunces.variable} h-full antialiased`}>
         <body className="min-h-full flex flex-col">{children}</body>
       </html>
     </ClerkProvider>

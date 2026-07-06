@@ -19,7 +19,9 @@ export default async function DashboardPage() {
   const stocks = await getSavedStocks();
 
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-background">
+    // `dark` keeps this screen on the legacy dark theme until Pass 2 of the
+    // redesign restyles it (the site-wide default is now warm light).
+    <div className="dark relative min-h-screen overflow-x-clip bg-background text-foreground">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[360px] bg-[radial-gradient(50%_60%_at_50%_0%,--theme(--color-primary/12%),transparent_70%)]"

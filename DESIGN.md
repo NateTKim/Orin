@@ -58,6 +58,52 @@ this is mostly re-defining those, plus removing the forced `dark` class in `app/
   "what most people miss" hero card stays the visual centerpiece of the results screen; the
   portfolio/feed cards keep their future-content slots.
 
+## Tokens as built (Pass 1 — implemented in `app/globals.css`)
+
+Pass 1 shipped the token system and the warm landing page. The app screens
+(results, dashboard, discover) are temporarily pinned to the legacy dark theme
+via a `dark` wrapper class on their root divs; Pass 2 removes those wrappers
+and restyles with the tokens below.
+
+### Raw scales (`@theme` — usable as Tailwind utilities)
+
+- **`brand-50 … brand-950`** — warm cornflower blue, oklch hue 266.
+  `brand-600` ≈ `#3b64dd` is the primary. Utilities: `bg-brand-600`,
+  `text-brand-700`, `from-brand-50`, `ring-brand-100`, …
+- **`sand-50 … sand-950`** — warm gray. `sand-50` ≈ `#fcfaf6` is the app
+  background; `sand-900` is body text (15:1 contrast); `sand-500` is muted
+  text (4.7:1, AA).
+- **`up` / `down`** — financial direction green/red tuned for warm light
+  (`text-up`, `text-down`; both ≈5.2:1 on card). Use these in Pass 2 instead
+  of `emerald-400`/`red-400`.
+- **`shadow-card`, `shadow-card-lg`** — soft warm-brown shadows (never pure
+  black). Default card treatment: `bg-card shadow-card` + generous radius.
+- **`font-display`** — Fraunces (serif), loaded in `app/layout.tsx`. For
+  landing headlines and brand moments only; body/UI stays Inter
+  (`--font-sans`). Numbers should use `tabular-nums`.
+
+### Semantic tokens (`:root` — what components should normally use)
+
+`--background`=sand-50, `--foreground`=sand-900, `--card`=warm near-white,
+`--primary`=brand-600, `--accent`=brand-50 / `--accent-foreground`=brand-700,
+`--muted`=sand-100 / `--muted-foreground`=sand-500, `--border`=sand-200,
+`--destructive`=down, charts = brand-600 / up-green / warm amber / brand-300 /
+sand-400. `--radius` = 0.75rem (the `.dark` legacy block keeps the old
+0.625rem so unrestyled screens don't shift).
+
+### Landing-specific
+
+- `.orin-sunrise` — the static CSS dawn-sky backdrop: a vertical sky gradient
+  (blue → rose → peach → gold) plus a sun-glow radial and two warm flanks,
+  masked into the background (no images, no animation).
+- The sunrise scene also has two inline-SVG layers (in `home-client.tsx`):
+  `.orin-stars` (faint dots fading as the sky brightens) and `.orin-horizon`
+  (three flat mountain ranges — cool blue / rose / warm sand — whose bases
+  melt into the paper; the busiest range is desktop-only).
+- Hero search = input + CTA inside one floating pill (`rounded-2xl bg-card/90
+  shadow-card-lg` with a `focus-within` brand ring).
+- Clerk modal is themed light with `colorPrimary: #3b64dd` in `app/layout.tsx`.
+
 ## Guardrails during the redesign
 
 - **Presentation only.** Do not touch extraction, caching, auth, RLS, server actions, or the

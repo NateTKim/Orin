@@ -83,7 +83,9 @@ export function HomeClient({ initialTicker }: { initialTicker?: string }) {
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-clip bg-background">
+    // `dark` keeps the tool view on the legacy dark theme until Pass 2 of the
+    // redesign restyles it (the site-wide default is now warm light).
+    <div className="dark relative min-h-screen overflow-x-clip bg-background text-foreground">
       {/* Soft accent glow behind the header */}
       <div
         aria-hidden
@@ -151,26 +153,50 @@ function SearchForm({
   variant: "hero" | "compact";
 }) {
   const hero = variant === "hero";
+
+  if (hero) {
+    // Landing treatment: one warm floating "pill" that holds both the input
+    // and the CTA, so the whole unit reads as a single inviting action.
+    return (
+      <form
+        onSubmit={onSubmit}
+        className="flex w-full max-w-lg items-center gap-2 rounded-2xl border border-border/80 bg-card/90 p-2 shadow-card-lg backdrop-blur-sm transition-shadow focus-within:border-brand-300 focus-within:ring-4 focus-within:ring-brand-600/10"
+      >
+        <Input
+          value={ticker}
+          onChange={(e) => setTicker(e.target.value)}
+          placeholder="Ticker, e.g. AAPL"
+          aria-label="Stock ticker"
+          maxLength={10}
+          className="h-12 flex-1 border-transparent bg-transparent px-3 text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 md:text-base"
+        />
+        <Button
+          type="submit"
+          size="lg"
+          className="h-12 shrink-0 rounded-xl px-6 text-[15px] font-semibold shadow-[0_8px_20px_-8px_var(--color-brand-600)]"
+          disabled={loading}
+        >
+          {loading ? "Reading…" : "Explain it"}
+        </Button>
+      </form>
+    );
+  }
+
+  // Compact treatment used inside the (still dark) tool view header.
   return (
-    <form onSubmit={onSubmit} className={cn("flex gap-2", hero && "w-full max-w-md")}>
+    <form onSubmit={onSubmit} className="flex gap-2">
       <Input
         value={ticker}
         onChange={(e) => setTicker(e.target.value)}
         placeholder="Ticker, e.g. AAPL"
         aria-label="Stock ticker"
         maxLength={10}
-        className={cn(
-          "rounded-xl border-white/10 bg-card text-base shadow-inner",
-          hero ? "h-12 flex-1" : "h-11 max-w-48",
-        )}
+        className="h-11 max-w-48 rounded-xl border-white/10 bg-card text-base shadow-inner"
       />
       <Button
         type="submit"
         size="lg"
-        className={cn(
-          "rounded-xl shadow-[0_0_24px_-6px_var(--color-primary)]",
-          hero ? "h-12 px-6 text-[15px]" : "h-11 px-5",
-        )}
+        className="h-11 rounded-xl px-5 shadow-[0_0_24px_-6px_var(--color-primary)]"
         disabled={loading}
       >
         {loading ? "Reading…" : "Explain it"}
@@ -191,31 +217,99 @@ function Landing({
   onSubmit: (e: React.FormEvent) => void;
 }) {
   return (
-    <div className="flex flex-col">
-      {/* Slim top bar — discovery + account, so the hero stays the focus */}
-      <header className="flex items-center justify-end gap-2 px-6 py-5">
-        <DiscoverLink />
-        <AuthControls />
+    <div className="relative isolate flex flex-col">
+      {/* Sunrise backdrop — a static scene in three cheap layers: the CSS
+          sky gradient, a whisper of stars up top, and a layered mountain
+          horizon along the bottom (inline SVG, ~1 KB). All masked so they
+          dissolve into the paper background (see globals.css). */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] overflow-hidden sm:h-[640px]"
+      >
+        <div className="orin-sunrise absolute inset-0" />
+
+        {/* Fading stars in the still-blue part of the sky */}
+        <svg
+          className="orin-stars absolute inset-x-0 top-0 h-[280px] w-full"
+          viewBox="0 0 1440 280"
+          preserveAspectRatio="xMidYMin slice"
+          fill="white"
+        >
+          <circle cx="60" cy="42" r="1.2" opacity="0.5" />
+          <circle cx="152" cy="92" r="1" opacity="0.35" />
+          <circle cx="243" cy="30" r="1.4" opacity="0.55" />
+          <circle cx="332" cy="122" r="0.9" opacity="0.3" />
+          <circle cx="428" cy="62" r="1.1" opacity="0.45" />
+          <circle cx="521" cy="24" r="1" opacity="0.4" />
+          <circle cx="608" cy="102" r="1.3" opacity="0.35" />
+          <circle cx="702" cy="50" r="1" opacity="0.5" />
+          <circle cx="788" cy="138" r="0.9" opacity="0.25" />
+          <circle cx="884" cy="36" r="1.2" opacity="0.45" />
+          <circle cx="978" cy="92" r="1" opacity="0.35" />
+          <circle cx="1063" cy="46" r="1.4" opacity="0.5" />
+          <circle cx="1152" cy="120" r="0.9" opacity="0.3" />
+          <circle cx="1238" cy="72" r="1.1" opacity="0.4" />
+          <circle cx="1332" cy="32" r="1.2" opacity="0.5" />
+          <circle cx="1392" cy="112" r="0.9" opacity="0.3" />
+          <circle cx="502" cy="162" r="0.8" opacity="0.2" />
+          <circle cx="902" cy="172" r="0.8" opacity="0.2" />
+        </svg>
+
+        {/* Dawn horizon: three overlapping flat ranges — far (cool blue
+            haze), mid (soft rose), near (warm sand) — bases fading into
+            the paper background via the .orin-horizon mask. */}
+        <svg
+          className="orin-horizon absolute inset-x-0 bottom-0 h-24 w-full sm:h-40"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+        >
+          {/* The busiest range is desktop-only: squeezed onto a phone width
+              its peaks get too dense and read as noise. */}
+          <path
+            className="hidden sm:block"
+            d="M0,205 L95,160 L205,195 L335,118 L445,178 L555,148 L680,198 L800,132 L910,182 L1015,152 L1125,196 L1240,140 L1340,185 L1440,158 L1440,320 L0,320 Z"
+            fill="var(--color-brand-200)"
+            fillOpacity="0.5"
+          />
+          <path
+            d="M0,248 L170,182 L315,232 L480,166 L650,244 L830,188 L1000,246 L1160,196 L1310,238 L1440,202 L1440,320 L0,320 Z"
+            fill="oklch(0.84 0.045 350)"
+            fillOpacity="0.4"
+          />
+          <path
+            d="M0,292 L215,238 L440,282 L665,228 L920,286 L1140,248 L1440,278 L1440,320 L0,320 Z"
+            fill="oklch(0.87 0.05 60)"
+            fillOpacity="0.55"
+          />
+        </svg>
+      </div>
+
+      {/* Top bar: wordmark left, discovery + account right */}
+      {/* flex-wrap: on narrow phones the account controls drop to a second
+          row instead of forcing the page wider than the viewport. */}
+      <header className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-5">
+        <span className="font-display text-2xl font-semibold tracking-tight text-foreground">
+          Orin
+        </span>
+        <div className="flex items-center gap-2">
+          <DiscoverLink />
+          <AuthControls />
+        </div>
       </header>
 
       {/* Hero */}
-      <section className="relative flex flex-col items-center px-6 pt-16 pb-16 text-center sm:pt-20 sm:pb-24">
-        {/* One tasteful centerpiece: a soft indigo glow that breathes behind
-            the headline (see .orin-hero-glow in globals.css). */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-          <div className="orin-hero-glow absolute left-1/2 top-[-12%] h-[560px] w-[820px] max-w-[150vw] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,--theme(--color-primary/22%),transparent_65%)] blur-2xl" />
-        </div>
-
-        <span className="text-lg font-semibold tracking-tight text-primary">Orin</span>
-        <h1 className="mt-8 max-w-3xl text-balance text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
+      <section className="flex flex-col items-center px-6 pt-14 pb-16 text-center sm:pt-24 sm:pb-24">
+        <h1 className="max-w-3xl text-balance font-display text-5xl font-medium leading-[1.06] tracking-tight text-foreground sm:text-7xl">
           Understand what you own
         </h1>
-        <p className="mt-5 max-w-xl text-balance text-base leading-7 text-muted-foreground sm:text-lg">
+        {/* sand-600 (not muted-foreground): this copy sits on the tinted
+            sunrise wash, so it needs one step more contrast than plain paper */}
+        <p className="mt-6 max-w-xl text-balance text-base leading-7 text-sand-600 sm:text-lg sm:leading-8">
           Orin reads company earnings reports and tells you in plain English what&apos;s
           really going on — including what most people miss.
         </p>
 
-        <div className="mt-9 flex w-full justify-center">
+        <div className="mt-10 flex w-full justify-center">
           <SearchForm
             ticker={ticker}
             setTicker={setTicker}
@@ -224,7 +318,7 @@ function Landing({
             variant="hero"
           />
         </div>
-        <p className="mt-3 text-xs text-muted-foreground/70">Free · no account needed</p>
+        <p className="mt-4 text-sm text-sand-600">Free · no account needed</p>
       </section>
 
       {/* How it works */}
@@ -252,9 +346,9 @@ function Landing({
       </section>
 
       {/* Trust / differentiation */}
-      <section className="mx-auto w-full max-w-3xl px-6 py-10">
-        <div className="rounded-2xl border border-primary/20 bg-card/60 p-8 text-center shadow-[0_0_60px_-24px_var(--color-primary)]">
-          <p className="text-balance text-lg font-medium leading-8 tracking-tight sm:text-xl">
+      <section className="mx-auto w-full max-w-3xl px-6 py-12">
+        <div className="rounded-3xl bg-gradient-to-b from-brand-50 to-card p-8 text-center shadow-card ring-1 ring-brand-100 sm:p-10">
+          <p className="text-balance font-display text-xl font-medium leading-8 text-foreground sm:text-2xl sm:leading-9">
             Other tools show you the numbers.{" "}
             <span className="text-primary">Orin actually reads the report</span> — the
             risks, the fine print, and the things companies would rather you skim past.
@@ -264,7 +358,7 @@ function Landing({
 
       {/* Footer */}
       <footer className="mx-auto w-full max-w-4xl px-6 pb-14 pt-6">
-        <p className="border-t border-white/[0.06] pt-6 text-center text-xs leading-5 text-muted-foreground">
+        <p className="border-t border-border pt-6 text-center text-xs leading-5 text-muted-foreground">
           Orin helps you understand company filings. It is not investment advice.
         </p>
       </footer>
@@ -284,17 +378,17 @@ function HowStep({
   body: string;
 }) {
   return (
-    <Card className={cardShell}>
+    <Card className="rounded-2xl bg-card shadow-card ring-sand-900/8">
       <CardContent className="flex flex-col gap-3 py-2">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/25">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-brand-50 ring-1 ring-brand-100">
             {icon}
           </span>
           <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Step {n}
           </span>
         </div>
-        <h3 className="text-base font-semibold tracking-tight">{title}</h3>
+        <h3 className="text-base font-semibold tracking-tight text-foreground">{title}</h3>
         <p className="text-sm leading-6 text-muted-foreground">{body}</p>
       </CardContent>
     </Card>

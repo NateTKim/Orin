@@ -20,7 +20,7 @@ export function AuthControls({ showDashboardLink = true }: { showDashboardLink?:
   const { isLoaded, isSignedIn } = useUser();
 
   if (!isLoaded) {
-    return <div aria-hidden className="size-8 rounded-full bg-white/5" />;
+    return <div aria-hidden className="size-8 rounded-full bg-foreground/5" />;
   }
 
   if (isSignedIn) {
