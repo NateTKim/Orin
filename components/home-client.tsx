@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RevenueChart } from "@/components/revenue-chart";
 import { AuthControls } from "@/components/auth-controls";
+import { DiscoverLink } from "@/components/discover-link";
 import { SaveButton } from "@/components/portfolio/save-button";
 import { cn } from "@/lib/utils";
 import { formatPct, formatPerShare, formatUsd, formatUsdCompact } from "@/lib/format.ts";
@@ -116,6 +117,7 @@ export function HomeClient({ initialTicker }: { initialTicker?: string }) {
               loading={view.kind === "loading"}
               variant="compact"
             />
+            <DiscoverLink />
             <AuthControls />
           </div>
         </header>
@@ -190,8 +192,9 @@ function Landing({
 }) {
   return (
     <div className="flex flex-col">
-      {/* Slim top bar — just the account control, so the hero stays the focus */}
-      <header className="flex items-center justify-end px-6 py-5">
+      {/* Slim top bar — discovery + account, so the hero stays the focus */}
+      <header className="flex items-center justify-end gap-2 px-6 py-5">
+        <DiscoverLink />
         <AuthControls />
       </header>
 

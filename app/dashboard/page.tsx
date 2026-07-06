@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { AuthControls } from "@/components/auth-controls";
+import { DiscoverLink } from "@/components/discover-link";
 import { DashboardSearch } from "@/components/portfolio/dashboard-search";
 import { PortfolioGrid } from "@/components/portfolio/portfolio-grid";
 import { getSavedStocks } from "@/lib/portfolio/actions.ts";
@@ -33,6 +34,7 @@ export default async function DashboardPage() {
           </Link>
           <div className="flex flex-wrap items-center justify-end gap-3">
             <DashboardSearch />
+            <DiscoverLink />
             <AuthControls showDashboardLink={false} />
           </div>
         </header>
