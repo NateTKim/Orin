@@ -202,8 +202,8 @@
    the paper background with no hard edge. Cheap on mobile by construction. */
 .orin-sunrise {
   background:
-    /* sun glow — centered low, behind the search pill */
-    radial-gradient(52% 36% at 50% 62%, oklch(0.955 0.07 75 / 90%), transparent 72%),
+    /* sun glow — low and right of center, above the SVG sun on the horizon */
+    radial-gradient(52% 36% at 69% 58%, oklch(0.955 0.07 75 / 90%), transparent 72%),
     /* rose flank (left) and peach flank (right) */
     radial-gradient(60% 48% at 14% 18%, oklch(0.92 0.05 15 / 65%), transparent 72%),
     radial-gradient(58% 44% at 86% 24%, oklch(0.93 0.065 50 / 70%), transparent 72%),
@@ -224,9 +224,22 @@
    Both are masked so they dissolve into the sky/paper — no hard edges. */
 .orin-horizon {
   /* mountain silhouettes: peaks crisp, bases melting into morning haze */
-  mask-image: linear-gradient(to bottom, black 45%, transparent 98%);
+  mask-image: linear-gradient(to bottom, black 62%, transparent 100%);
 }
 .orin-stars {
   /* stars fade out as the sky brightens toward the horizon */
   mask-image: linear-gradient(to bottom, black 30%, transparent 85%);
+}
+.orin-mist {
+  /* morning valley mist pooling over the mountain bases */
+  background: linear-gradient(
+    to top,
+    oklch(0.985 0.012 85 / 90%) 0%,
+    oklch(0.985 0.012 85 / 35%) 55%,
+    transparent 100%
+  );
+}
+.orin-cloud {
+  /* one soft wisp — an elongated pastel bloom, no filters */
+  background: radial-gradient(50% 50% at 50% 50%, oklch(0.975 0.018 60 / 60%), transparent 70%);
 }

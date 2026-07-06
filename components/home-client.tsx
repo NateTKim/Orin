@@ -218,10 +218,11 @@ function Landing({
 }) {
   return (
     <div className="relative isolate flex flex-col">
-      {/* Sunrise backdrop — a static scene in three cheap layers: the CSS
-          sky gradient, a whisper of stars up top, and a layered mountain
-          horizon along the bottom (inline SVG, ~1 KB). All masked so they
-          dissolve into the paper background (see globals.css). */}
+      {/* Sunrise backdrop — a static illustrated dawn in cheap layers: the
+          CSS sky gradient, faint stars, soft cloud wisps, and a horizon SVG
+          holding the rising sun plus five receding ranges, finished with a
+          band of valley mist. No images, no filters, no animation — masked
+          so everything dissolves into the paper background (globals.css). */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] overflow-hidden sm:h-[640px]"
@@ -255,33 +256,82 @@ function Landing({
           <circle cx="902" cy="172" r="0.8" opacity="0.2" />
         </svg>
 
-        {/* Dawn horizon: three overlapping flat ranges — far (cool blue
-            haze), mid (soft rose), near (warm sand) — bases fading into
-            the paper background via the .orin-horizon mask. */}
+        {/* Soft cloud wisps — desktop only, kept near the edges so the sky
+            behind the headline stays calm. */}
+        <div className="orin-cloud absolute left-[6%] top-[130px] hidden h-10 w-64 sm:block" />
+        <div className="orin-cloud absolute right-[4%] top-[210px] hidden h-12 w-80 sm:block" />
+        <div className="orin-cloud absolute right-[22%] top-[90px] hidden h-8 w-48 opacity-70 sm:block" />
+
+        {/* Dawn horizon: the rising sun plus five ranges receding with
+            atmospheric perspective — coolest and lightest at the back,
+            warming and firming toward the front; one mid range picks up
+            the sunrise light via a gradient fill. The sun lives INSIDE
+            this SVG so the ranges genuinely occlude its lower half at
+            every viewport size. Bases fade out via the .orin-horizon mask. */}
         <svg
           className="orin-horizon absolute inset-x-0 bottom-0 h-24 w-full sm:h-40"
           viewBox="0 0 1440 320"
           preserveAspectRatio="none"
         >
-          {/* The busiest range is desktop-only: squeezed onto a phone width
-              its peaks get too dense and read as noise. */}
+          <defs>
+            <radialGradient id="orinSunGlow">
+              <stop offset="0%" stopColor="oklch(0.98 0.07 82)" stopOpacity="0.9" />
+              <stop offset="55%" stopColor="oklch(0.97 0.06 78)" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="oklch(0.97 0.055 78)" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="orinSunCore">
+              <stop offset="0%" stopColor="oklch(1 0.01 95)" />
+              <stop offset="40%" stopColor="oklch(0.995 0.035 90)" />
+              <stop offset="62%" stopColor="oklch(0.98 0.07 82)" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="oklch(0.97 0.08 75)" stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id="orinLitRange" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="oklch(0.84 0.04 345)" />
+              <stop offset="50%" stopColor="oklch(0.89 0.055 55)" />
+              <stop offset="100%" stopColor="oklch(0.84 0.04 345)" />
+            </linearGradient>
+          </defs>
+
+          {/* the sun: wide soft bloom + flattened glowing disc, low in the
+              center valley (drawn first so every range overlaps it) */}
+          {/* off-center so it rises into open sky instead of hiding behind
+              the search pill */}
+          <ellipse cx="990" cy="135" rx="320" ry="140" fill="url(#orinSunGlow)" />
+          <circle cx="990" cy="110" r="72" fill="url(#orinSunCore)" />
+
+          {/* ranges, farthest → nearest. The two most distant are
+              desktop-only: compressed onto a phone width they turn to noise. */}
           <path
             className="hidden sm:block"
-            d="M0,205 L95,160 L205,195 L335,118 L445,178 L555,148 L680,198 L800,132 L910,182 L1015,152 L1125,196 L1240,140 L1340,185 L1440,158 L1440,320 L0,320 Z"
+            d="M0,175 L120,142 L250,170 L380,126 L520,162 L640,144 L760,168 L880,136 L1000,164 L1120,140 L1250,168 L1360,148 L1440,160 L1440,320 L0,320 Z"
             fill="var(--color-brand-200)"
-            fillOpacity="0.5"
+            fillOpacity="0.45"
           />
           <path
-            d="M0,248 L170,182 L315,232 L480,166 L650,244 L830,188 L1000,246 L1160,196 L1310,238 L1440,202 L1440,320 L0,320 Z"
-            fill="oklch(0.84 0.045 350)"
-            fillOpacity="0.4"
-          />
-          <path
-            d="M0,292 L215,238 L440,282 L665,228 L920,286 L1140,248 L1440,278 L1440,320 L0,320 Z"
-            fill="oklch(0.87 0.05 60)"
+            className="hidden sm:block"
+            d="M0,205 L95,168 L205,198 L335,142 L445,186 L555,158 L680,200 L800,150 L910,190 L1015,162 L1125,200 L1240,152 L1340,190 L1440,166 L1440,320 L0,320 Z"
+            fill="oklch(0.86 0.03 340)"
             fillOpacity="0.55"
           />
+          <path
+            d="M0,248 L170,196 L315,238 L480,180 L650,246 L830,198 L1000,248 L1160,206 L1310,242 L1440,212 L1440,320 L0,320 Z"
+            fill="oklch(0.84 0.045 350)"
+            fillOpacity="0.55"
+          />
+          <path
+            d="M0,268 L190,228 L370,262 L560,214 L760,266 L950,226 L1130,264 L1290,238 L1440,258 L1440,320 L0,320 Z"
+            fill="url(#orinLitRange)"
+            fillOpacity="0.6"
+          />
+          <path
+            d="M0,296 L215,252 L440,288 L665,268 L920,292 L1140,258 L1440,284 L1440,320 L0,320 Z"
+            fill="oklch(0.85 0.052 58)"
+            fillOpacity="0.7"
+          />
         </svg>
+
+        {/* morning mist pooling over the mountain bases */}
+        <div className="orin-mist absolute inset-x-0 bottom-0 h-14 sm:h-20" />
       </div>
 
       {/* Top bar: wordmark left, discovery + account right */}

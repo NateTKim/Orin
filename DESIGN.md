@@ -96,10 +96,17 @@ sand-400. `--radius` = 0.75rem (the `.dark` legacy block keeps the old
 - `.orin-sunrise` — the static CSS dawn-sky backdrop: a vertical sky gradient
   (blue → rose → peach → gold) plus a sun-glow radial and two warm flanks,
   masked into the background (no images, no animation).
-- The sunrise scene also has two inline-SVG layers (in `home-client.tsx`):
-  `.orin-stars` (faint dots fading as the sky brightens) and `.orin-horizon`
-  (three flat mountain ranges — cool blue / rose / warm sand — whose bases
-  melt into the paper; the busiest range is desktop-only).
+- The sunrise scene is layered on top (all in `home-client.tsx`, SVG/CSS
+  only): `.orin-stars` (faint dots fading as the sky brightens), a rising
+  sun (soft-gradient disc + bloom, drawn inside the horizon SVG so the
+  ranges occlude its lower half; placed off-center right so it rises into
+  open sky, with the CSS sky-bloom tracking it), five mountain ranges
+  receding with atmospheric perspective (cool/light far → warm/firmer
+  near; one range lit by a sunrise gradient), `.orin-mist` pooling over
+  the bases, and three `.orin-cloud` wisps. The two farthest ranges and
+  the clouds are desktop-only so phones keep a calmer scene.
+- The simpler pre-scene version (three ranges, no sun/mist/clouds) is
+  preserved as the "Redesign Pass 1" commit for comparison.
 - Hero search = input + CTA inside one floating pill (`rounded-2xl bg-card/90
   shadow-card-lg` with a `focus-within` brand ring).
 - Clerk modal is themed light with `colorPrimary: #3b64dd` in `app/layout.tsx`.
