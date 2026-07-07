@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { AuthControls } from "@/components/auth-controls";
 import { DiscoverLink } from "@/components/discover-link";
 import { DashboardSearch } from "@/components/portfolio/dashboard-search";
-import { PortfolioGrid } from "@/components/portfolio/portfolio-grid";
+import { PortfolioGrid, PortfolioLoadError } from "@/components/portfolio/portfolio-grid";
 import { getSavedStocks } from "@/lib/portfolio/actions.ts";
 
 // Reads the signed-in user's saved rows on the server, so nothing renders until
@@ -16,6 +16,7 @@ export default async function DashboardPage() {
   // Logged-out visitors have no dashboard — send them to the landing page.
   if (!userId) redirect("/");
 
+  // null = a real load failure (distinct from an empty portfolio).
   const stocks = await getSavedStocks();
 
   return (
@@ -47,7 +48,11 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <PortfolioGrid initialStocks={stocks} />
+        {stocks === null ? (
+          <PortfolioLoadError />
+        ) : (
+          <PortfolioGrid initialStocks={stocks} />
+        )}
 
         <footer className="border-t border-border pt-6 text-xs leading-5 text-muted-foreground">
           All numbers come straight from each company&apos;s official SEC report. Not

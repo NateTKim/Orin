@@ -19,7 +19,9 @@ export default async function DiscoverPage() {
     getDiscoverFeed(),
     userId ? getSavedStocks() : Promise.resolve([]),
   ]);
-  const savedTickers = savedStocks.map((s) => s.ticker);
+  // A saved-ticker load failure (null) is non-critical here — it only affects
+  // which feed cards show as already-saved, so degrade to "none saved".
+  const savedTickers = (savedStocks ?? []).map((s) => s.ticker);
 
   return (
     // Calm workspace: warm paper with a barely-there brand wash up top.

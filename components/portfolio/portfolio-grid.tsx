@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Bookmark } from "lucide-react";
+import { Bookmark, CloudOff } from "lucide-react";
 import { removeStock } from "@/lib/portfolio/actions.ts";
 import type { SavedStock } from "@/lib/portfolio/types.ts";
 import { StockCard } from "./stock-card";
@@ -63,6 +63,27 @@ function EmptyState() {
       >
         Search for a company →
       </a>
+    </div>
+  );
+}
+
+/**
+ * Shown when the saved list failed to LOAD (a Supabase error), as opposed to
+ * the genuine empty state above. Kept soft and reassuring — the data is likely
+ * fine, the read just hiccupped — so a user with saves doesn't think they
+ * vanished. Same card language as EmptyState.
+ */
+export function PortfolioLoadError() {
+  return (
+    <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-6 py-16 text-center shadow-card ring-1 ring-sand-900/8">
+      <span className="flex size-14 items-center justify-center rounded-2xl bg-sand-100 ring-1 ring-sand-200">
+        <CloudOff className="size-6 text-sand-600" aria-hidden />
+      </span>
+      <h2 className="text-lg font-semibold tracking-tight">We couldn&apos;t load your portfolio</h2>
+      <p className="max-w-sm text-sm leading-6 text-muted-foreground">
+        This is on our end, not yours — your saved companies are safe. Please refresh the page
+        to try again.
+      </p>
     </div>
   );
 }

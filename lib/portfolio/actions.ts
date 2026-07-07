@@ -13,20 +13,66 @@ import type { ActionResult, SavedStock, SavedStockInput } from "@/lib/portfolio/
 
 const TABLE = "saved_stocks";
 
+// ---------------------------------------------------------------------------
+// Input validation. Server actions are a public RPC surface: TypeScript types
+// vanish at runtime, so a hand-crafted call can pass any shape. RLS already
+// guarantees a user can only touch their OWN rows — this layer stops them
+// storing junk or oversized data in those rows (e.g. a 10MB companyName).
+// Helpers are not exported: a "use server" module may only export async fns.
+// ---------------------------------------------------------------------------
+
+/** Same shape accepted by the analysis endpoint: a letter, then up to 9 more
+ *  letters/dots/hyphens. Returns the normalized (trimmed, upper) ticker, or
+ *  null if it doesn't look like a ticker. */
+const TICKER_RE = /^[A-Za-z][A-Za-z.\-]{0,9}$/;
+function normalizeTicker(ticker: unknown): string | null {
+  if (typeof ticker !== "string") return null;
+  const t = ticker.trim().toUpperCase();
+  return TICKER_RE.test(t) ? t : null;
+}
+
+/** Field length caps — generous for real filings, tight enough to block abuse. */
+const MAX_COMPANY_NAME = 200;
+const MAX_ACCESSION = 30;
+const MAX_FORM = 10;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Validate + normalize a save payload. Returns a clean row-ready object, or
+ *  null if anything is the wrong type, too long, or malformed. */
+function validateSaveInput(
+  input: SavedStockInput,
+): { ticker: string; companyName: string; accessionNumber: string; form: string; filedDate: string } | null {
+  const ticker = normalizeTicker(input?.ticker);
+  if (!ticker) return null;
+
+  const { companyName, accessionNumber, form } = input;
+  if (typeof companyName !== "string" || companyName.length > MAX_COMPANY_NAME) return null;
+  if (typeof accessionNumber !== "string" || accessionNumber.length > MAX_ACCESSION) return null;
+  if (typeof form !== "string" || form.length > MAX_FORM) return null;
+
+  const filedDate = input.filedDate ?? "";
+  if (typeof filedDate !== "string" || (filedDate !== "" && !DATE_RE.test(filedDate))) return null;
+
+  return { ticker, companyName, accessionNumber, form, filedDate };
+}
+
 /** Add (or refresh) a company in the signed-in user's portfolio. */
 export async function saveStock(input: SavedStockInput): Promise<ActionResult> {
   const { userId } = await auth();
   if (!userId) return { ok: false, error: "not-signed-in" };
 
+  const clean = validateSaveInput(input);
+  if (!clean) return { ok: false, error: "invalid-input" };
+
   const supabase = createSupabaseServerClient();
   const { error } = await supabase.from(TABLE).upsert(
     {
       user_id: userId,
-      ticker: input.ticker,
-      company_name: input.companyName,
-      accession_number: input.accessionNumber,
-      form: input.form,
-      filed_date: input.filedDate || null,
+      ticker: clean.ticker,
+      company_name: clean.companyName,
+      accession_number: clean.accessionNumber,
+      form: clean.form,
+      filed_date: clean.filedDate || null,
     },
     { onConflict: "user_id,ticker" },
   );
@@ -43,8 +89,11 @@ export async function removeStock(ticker: string): Promise<ActionResult> {
   const { userId } = await auth();
   if (!userId) return { ok: false, error: "not-signed-in" };
 
+  const clean = normalizeTicker(ticker);
+  if (!clean) return { ok: false, error: "invalid-input" };
+
   const supabase = createSupabaseServerClient();
-  const { error } = await supabase.from(TABLE).delete().eq("user_id", userId).eq("ticker", ticker);
+  const { error } = await supabase.from(TABLE).delete().eq("user_id", userId).eq("ticker", clean);
   if (error) {
     console.error(`[portfolio] remove error: ${error.message}`);
     return { ok: false, error: error.message };
@@ -58,18 +107,26 @@ export async function isStockSaved(ticker: string): Promise<boolean> {
   const { userId } = await auth();
   if (!userId) return false;
 
+  const clean = normalizeTicker(ticker);
+  if (!clean) return false;
+
   const supabase = createSupabaseServerClient();
   const { data } = await supabase
     .from(TABLE)
     .select("ticker")
     .eq("user_id", userId)
-    .eq("ticker", ticker)
+    .eq("ticker", clean)
     .maybeSingle();
   return Boolean(data);
 }
 
-/** The signed-in user's saved companies, newest first. */
-export async function getSavedStocks(): Promise<SavedStock[]> {
+/**
+ * The signed-in user's saved companies, newest first.
+ * Returns `null` to signal a real load failure (Supabase error), which the
+ * dashboard shows as a distinct "couldn't load" state — as opposed to `[]`,
+ * which genuinely means the portfolio is empty. Logged-out callers get `[]`.
+ */
+export async function getSavedStocks(): Promise<SavedStock[] | null> {
   const { userId } = await auth();
   if (!userId) return [];
 
@@ -81,7 +138,7 @@ export async function getSavedStocks(): Promise<SavedStock[]> {
     .order("created_at", { ascending: false });
   if (error) {
     console.error(`[portfolio] list error: ${error.message}`);
-    return [];
+    return null;
   }
   return (data ?? []).map((r) => ({
     ticker: r.ticker,

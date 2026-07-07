@@ -15,7 +15,10 @@ const TICKER_RE = /^[A-Za-z][A-Za-z.\-]{0,9}$/;
 
 // Errors that mean "no such filing to show" vs. a transient upstream problem.
 const ERROR_MESSAGES: Record<string, string> = {
-  "no-recent-filing": "This company has no 10-Q or 10-K on file with the SEC.",
+  // The 20-F/40-F note explains the common foreign/ADR case (Toyota, Shell,
+  // etc.) so a "no filing" result reads as expected, not as a bug.
+  "no-recent-filing":
+    "This company has no 10-Q or 10-K on file with the SEC. Foreign companies file different report types (like the 20-F) that Orin doesn't read yet.",
   "edgar-unavailable": "SEC EDGAR isn't responding right now. Please try again in a moment.",
 };
 

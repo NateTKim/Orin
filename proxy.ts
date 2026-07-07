@@ -1,12 +1,15 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-// clerkMiddleware() attaches Clerk's auth context to every matched request so
-// that `auth()` works in server code and <SignedIn>/<SignedOut> work in the UI.
+// Next 16 renamed the "middleware" file convention to "proxy" (middleware.ts is
+// deprecated and slated for removal in Next 17). Same behavior, new filename:
+// the default export runs on every matched request.
+//
+// clerkMiddleware() attaches Clerk's auth context so that `auth()` works in
+// server code and <SignedIn>/<SignedOut> work in the UI.
 //
 // IMPORTANT: on its own it does NOT protect or gate anything — every route
 // stays public. Logged-out users can still look up tickers exactly as before.
-// We'll only add route protection later, and only for account-specific
-// endpoints (e.g. saving a portfolio).
+// Account-specific access is enforced in the server actions + RLS, not here.
 export default clerkMiddleware();
 
 export const config = {
