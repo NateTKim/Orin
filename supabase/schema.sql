@@ -58,7 +58,9 @@ create policy "own profile: update"
   using ((auth.jwt() ->> 'sub') = id)
   with check ((auth.jwt() ->> 'sub') = id);
 
--- saved_stocks: a person may only see/add/remove THEIR OWN saved tickers.
+-- saved_stocks: a person may only see/add/remove/update THEIR OWN saved
+-- tickers. NOTE: the UPDATE policy (needed by saveStock's upsert conflict
+-- path) lives in the follow-up migration supabase/rls_update.sql.
 create policy "own saves: select"
   on public.saved_stocks for select to authenticated
   using ((auth.jwt() ->> 'sub') = user_id);

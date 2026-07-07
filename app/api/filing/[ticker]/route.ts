@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { resolveLatestFiling, buildSnapshot } from "@/lib/edgar/snapshot.ts";
 import { summarizeFiling } from "@/lib/summarize.ts";
 import { getCachedFiling, setCachedFiling } from "@/lib/cache.ts";
+import { clientKey, recordAndCheck } from "@/lib/rate-limit.ts";
+import type { CikResult, FilingRef } from "@/lib/edgar/types.ts";
 import type { FilingApiResponse, FilingApiSuccess } from "@/lib/api-types.ts";
 
 // EDGAR fetches + the Claude call take well over the default function
@@ -17,8 +19,14 @@ const ERROR_MESSAGES: Record<string, string> = {
   "edgar-unavailable": "SEC EDGAR isn't responding right now. Please try again in a moment.",
 };
 
+// In-flight analyses keyed on accession number. If two requests race for the
+// same uncached filing, the second joins the first's promise instead of
+// starting a duplicate (expensive) Claude call. Entries are removed when the
+// originating request settles.
+const inFlight = new Map<string, Promise<FilingApiSuccess>>();
+
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ ticker: string }> },
 ): Promise<NextResponse<FilingApiResponse>> {
   const { ticker } = await params;
@@ -62,11 +70,28 @@ export async function GET(
     `[cache MISS] ${cik.ticker} ${filing.form} ${filing.accessionNumber} — running full analysis`,
   );
 
-  // --- EXPENSIVE step (only on a miss): extract numbers + write the summary.
-  // Logic is unchanged from before; caching only decides whether we run it. ---
-  let snapshot;
+  // --- RATE-LIMIT GATE: only reached on a cache miss, i.e. when we're about to
+  // do the expensive (billable) work. Cache hits and the cheap rejections above
+  // never get here, so normal browsing is never throttled. ---
+  const key = clientKey(request);
+  const limit = recordAndCheck(key);
+  if (!limit.allowed) {
+    console.warn(`[rate-limit] ${key} blocked (retry in ${limit.retryAfterSec}s)`);
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "You're looking up companies faster than we can read filings. Give it a few minutes and try again.",
+      },
+      { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } },
+    );
+  }
+
+  // --- EXPENSIVE step (only on a miss). Coalesce concurrent requests for the
+  // SAME filing onto one analysis so a race can't run two Claude calls. ---
+  let payload: FilingApiSuccess;
   try {
-    snapshot = await buildSnapshot(cik, filing);
+    payload = await dedupedAnalysis(cik, filing);
   } catch (err) {
     console.error(`snapshot build failed: ${err instanceof Error ? err.message : String(err)}`);
     return NextResponse.json(
@@ -74,6 +99,37 @@ export async function GET(
       { status: 502 },
     );
   }
+
+  return NextResponse.json(payload, { headers: { "x-orin-cache": "MISS" } });
+}
+
+/**
+ * Run the full analysis for one filing, sharing a single in-flight execution
+ * across concurrent callers keyed on accession number. The first caller starts
+ * the work and registers the promise; later callers awaiting the same filing
+ * join it. The originator clears the entry once settled.
+ */
+function dedupedAnalysis(cik: CikResult, filing: FilingRef): Promise<FilingApiSuccess> {
+  const existing = inFlight.get(filing.accessionNumber);
+  if (existing) {
+    console.log(`[dedupe] joining in-flight analysis for ${filing.accessionNumber}`);
+    return existing;
+  }
+
+  const run = runAnalysis(cik, filing).finally(() => {
+    inFlight.delete(filing.accessionNumber);
+  });
+  inFlight.set(filing.accessionNumber, run);
+  return run;
+}
+
+/**
+ * The actual expensive path: extract numbers, write the summary, cache a fully
+ * successful result. Rejects only when the snapshot build itself fails (a
+ * summary failure is folded into the payload as a note, never a rejection).
+ */
+async function runAnalysis(cik: CikResult, filing: FilingRef): Promise<FilingApiSuccess> {
+  const snapshot = await buildSnapshot(cik, filing); // rejects -> 502 upstream
 
   // The numbers are the product; a summary failure must not sink the response.
   let summary: string | null = null;
@@ -108,5 +164,5 @@ export async function GET(
     );
   }
 
-  return NextResponse.json(payload, { headers: { "x-orin-cache": "MISS" } });
+  return payload;
 }
