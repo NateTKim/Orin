@@ -29,8 +29,7 @@ export default function RootLayout({
   return (
     // ClerkProvider makes auth state available everywhere. `appearance` themes
     // Clerk's built-in UI (sign-in modal, account menu) to the warm-light Orin
-    // brand. The not-yet-restyled app screens opt back into the legacy dark
-    // theme with a `dark` wrapper class (removed in Pass 2 of the redesign).
+    // brand used across the whole app.
     <ClerkProvider
       appearance={{
         variables: {

@@ -60,10 +60,12 @@ this is mostly re-defining those, plus removing the forced `dark` class in `app/
 
 ## Tokens as built (Pass 1 — implemented in `app/globals.css`)
 
-Pass 1 shipped the token system and the warm landing page. The app screens
-(results, dashboard, discover) are temporarily pinned to the legacy dark theme
-via a `dark` wrapper class on their root divs; Pass 2 removes those wrappers
-and restyles with the tokens below.
+Pass 1 shipped the token system and the warm landing page. Pass 2 converted
+the app screens (results, dashboard, discover) to the same warm-light system
+— the calm workspace variant: paper base, one shared card style
+(`bg-card shadow-card ring-sand-900/8`), brand blue only as restrained
+accents, `text-up`/`text-down` for financial direction. The legacy dark
+theme is fully removed from `globals.css`.
 
 ### Raw scales (`@theme` — usable as Tailwind utilities)
 

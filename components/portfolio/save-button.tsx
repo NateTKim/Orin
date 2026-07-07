@@ -9,7 +9,7 @@ import { isStockSaved, removeStock, saveStock } from "@/lib/portfolio/actions.ts
 import type { SavedStockInput } from "@/lib/portfolio/types.ts";
 
 const baseClasses = "gap-2 rounded-xl";
-const outlineClasses = "border-white/10 bg-background/40";
+const outlineClasses = "bg-card";
 
 /**
  * Save / Saved toggle for the results screen.

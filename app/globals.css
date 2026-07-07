@@ -11,10 +11,8 @@
    (bg-brand-600, text-sand-500, text-up, shadow-card, font-display, …).
    The semantic shadcn tokens in :root map onto them — components should
    prefer the semantic names (bg-background, text-muted-foreground, …).
-
-   The old dark theme is preserved verbatim under `.dark`: the not-yet-
-   restyled app screens (results, dashboard, discover) opt into it with a
-   `dark` wrapper class so they render unchanged until Pass 2.
+   Warm light is the only theme: the legacy dark theme was removed in
+   Pass 2 of the redesign.
 --------------------------------------------------------------------------- */
 
 @theme {
@@ -142,45 +140,6 @@
   --sidebar-accent-foreground: var(--color-sand-800);
   --sidebar-border: var(--color-sand-200);
   --sidebar-ring: var(--color-brand-400);
-}
-
-.dark {
-  /* LEGACY — the pre-redesign dark theme, kept byte-for-byte so the app
-     screens that haven't been restyled yet (results, dashboard, discover)
-     look exactly as before. Pass 2 removes this along with the `dark`
-     wrappers on those screens. */
-  --background: oklch(0.16 0.015 265);
-  --foreground: oklch(0.93 0.01 260);
-  --card: oklch(0.2 0.018 265);
-  --card-foreground: oklch(0.93 0.01 260);
-  --popover: oklch(0.2 0.018 265);
-  --popover-foreground: oklch(0.93 0.01 260);
-  --primary: oklch(0.63 0.21 285);
-  --primary-foreground: oklch(0.98 0.01 285);
-  --secondary: oklch(0.25 0.02 265);
-  --secondary-foreground: oklch(0.93 0.01 260);
-  --muted: oklch(0.24 0.02 265);
-  --muted-foreground: oklch(0.63 0.03 260);
-  --accent: oklch(0.27 0.05 285);
-  --accent-foreground: oklch(0.88 0.06 285);
-  --destructive: oklch(0.68 0.19 22);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 13%);
-  --ring: oklch(0.63 0.21 285 / 55%);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem; /* the old, slightly tighter radius */
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
 }
 
 @layer base {

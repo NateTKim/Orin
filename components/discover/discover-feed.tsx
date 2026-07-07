@@ -59,7 +59,7 @@ export function DiscoverFeed({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-white/[0.06] bg-card/40 px-6 py-12 text-center text-sm text-muted-foreground">
+      <div className="rounded-2xl bg-card px-6 py-12 text-center text-sm text-muted-foreground shadow-card ring-1 ring-sand-900/8">
         We couldn&apos;t load recent filings right now. Please try again in a moment.
       </div>
     );

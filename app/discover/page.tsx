@@ -22,18 +22,17 @@ export default async function DiscoverPage() {
   const savedTickers = savedStocks.map((s) => s.ticker);
 
   return (
-    // `dark` keeps this screen on the legacy dark theme until Pass 2 of the
-    // redesign restyles it (the site-wide default is now warm light).
-    <div className="dark relative min-h-screen overflow-x-clip bg-background text-foreground">
+    // Calm workspace: warm paper with a barely-there brand wash up top.
+    <div className="relative min-h-screen overflow-x-clip bg-background">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[360px] bg-[radial-gradient(50%_60%_at_50%_0%,--theme(--color-primary/12%),transparent_70%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-brand-50/60 to-transparent"
       />
       <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-14 sm:py-16">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <Link
             href="/"
-            className="text-2xl font-semibold tracking-tight text-primary transition-opacity hover:opacity-80"
+            className="font-display text-2xl font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80"
           >
             Orin
           </Link>
@@ -44,7 +43,7 @@ export default async function DiscoverPage() {
         </header>
 
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-2xl font-semibold tracking-tight">Recently filed reports</h1>
+          <h1 className="font-display text-2xl font-medium tracking-tight">Recently filed reports</h1>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
             Well-known companies that just filed with the SEC, newest first. These aren&apos;t
             recommendations — just reports worth understanding. Tap any company for the full
@@ -54,7 +53,7 @@ export default async function DiscoverPage() {
 
         <DiscoverFeed items={feed} initialSavedTickers={savedTickers} />
 
-        <footer className="border-t border-white/[0.06] pt-6 text-xs leading-5 text-muted-foreground">
+        <footer className="border-t border-border pt-6 text-xs leading-5 text-muted-foreground">
           Filing dates and details come straight from SEC EDGAR. Orin helps you understand
           company filings — it is not investment advice.
         </footer>

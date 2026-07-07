@@ -5,8 +5,7 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SavedStock } from "@/lib/portfolio/types.ts";
 
-const cardShell =
-  "rounded-2xl bg-gradient-to-b from-white/[0.03] to-transparent ring-1 ring-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.35)]";
+const cardShell = "rounded-2xl bg-card ring-1 ring-sand-900/8 shadow-card";
 
 function formatDate(iso: string): string {
   if (!iso) return "—";
@@ -50,7 +49,7 @@ export function StockCard({
         )}
       >
         <div className="flex items-start justify-between gap-3">
-          <span className="rounded-md bg-primary/15 px-2 py-0.5 text-sm font-medium tracking-wide text-accent-foreground">
+          <span className="rounded-md bg-accent px-2 py-0.5 text-sm font-medium tracking-wide text-accent-foreground ring-1 ring-brand-100">
             {stock.ticker}
           </span>
           {/* FUTURE SLOT: "new filing" badge goes here (space reserved on the right). */}
@@ -73,7 +72,7 @@ export function StockCard({
         disabled={removing}
         aria-label={`Remove ${stock.ticker} from your portfolio`}
         className={cn(
-          "absolute right-3 top-3 flex size-7 items-center justify-center rounded-lg bg-background/70 text-muted-foreground ring-1 ring-white/10 backdrop-blur",
+          "absolute right-3 top-3 flex size-7 items-center justify-center rounded-lg bg-card/90 text-muted-foreground shadow-card ring-1 ring-sand-900/10 backdrop-blur",
           "opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100",
           removing && "opacity-100",
         )}

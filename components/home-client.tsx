@@ -32,9 +32,9 @@ type ViewState =
   | { kind: "error"; message: string }
   | { kind: "result"; data: FilingApiSuccess };
 
-/* Floating-card treatment shared across the page. */
-const cardShell =
-  "rounded-2xl bg-gradient-to-b from-white/[0.03] to-transparent shadow-[0_8px_30px_rgba(0,0,0,0.35)]";
+/* Floating-card treatment shared across the page: warm white card, soft
+   warm shadow, hairline warm ring — same language as the landing cards. */
+const cardShell = "rounded-2xl bg-card shadow-card ring-sand-900/8";
 
 export function HomeClient({ initialTicker }: { initialTicker?: string }) {
   const seed = initialTicker?.trim().toUpperCase() ?? "";
@@ -83,13 +83,12 @@ export function HomeClient({ initialTicker }: { initialTicker?: string }) {
   }
 
   return (
-    // `dark` keeps the tool view on the legacy dark theme until Pass 2 of the
-    // redesign restyles it (the site-wide default is now warm light).
-    <div className="dark relative min-h-screen overflow-x-clip bg-background text-foreground">
-      {/* Soft accent glow behind the header */}
+    // The calm workspace: plain warm paper with a barely-there brand wash at
+    // the top — no sunrise scenery here, that energy stays on the landing.
+    <div className="relative min-h-screen overflow-x-clip bg-background">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(50%_60%_at_50%_0%,--theme(--color-primary/14%),transparent_70%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-brand-50/60 to-transparent"
       />
       <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-14 sm:py-16">
         <header className="flex flex-wrap items-center justify-between gap-4">
@@ -97,7 +96,7 @@ export function HomeClient({ initialTicker }: { initialTicker?: string }) {
             // Signed in: home base is the dashboard.
             <Link
               href="/dashboard"
-              className="text-2xl font-semibold tracking-tight text-primary transition-opacity hover:opacity-80"
+              className="font-display text-2xl font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80"
             >
               Orin
             </Link>
@@ -105,7 +104,7 @@ export function HomeClient({ initialTicker }: { initialTicker?: string }) {
             <button
               type="button"
               onClick={() => setView({ kind: "idle" })}
-              className="text-2xl font-semibold tracking-tight text-primary transition-opacity hover:opacity-80"
+              className="font-display text-2xl font-semibold tracking-tight text-foreground transition-opacity hover:opacity-80"
               aria-label="Back to Orin home"
             >
               Orin
@@ -128,7 +127,7 @@ export function HomeClient({ initialTicker }: { initialTicker?: string }) {
         {view.kind === "error" && <ErrorState message={view.message} />}
         {view.kind === "result" && <Results data={view.data} />}
 
-        <footer className="border-t border-white/[0.06] pt-6 text-xs leading-5 text-muted-foreground">
+        <footer className="border-t border-border pt-6 text-xs leading-5 text-muted-foreground">
           All numbers come straight from the company&apos;s official SEC report. The
           explanations are AI-written using only those numbers. Not investment advice.
         </footer>
@@ -182,7 +181,7 @@ function SearchForm({
     );
   }
 
-  // Compact treatment used inside the (still dark) tool view header.
+  // Compact treatment used inside the tool view header.
   return (
     <form onSubmit={onSubmit} className="flex gap-2">
       <Input
@@ -191,12 +190,12 @@ function SearchForm({
         placeholder="Ticker, e.g. AAPL"
         aria-label="Stock ticker"
         maxLength={10}
-        className="h-11 max-w-48 rounded-xl border-white/10 bg-card text-base shadow-inner"
+        className="h-11 max-w-48 rounded-xl bg-card text-base shadow-card"
       />
       <Button
         type="submit"
         size="lg"
-        className="h-11 rounded-xl px-5 shadow-[0_0_24px_-6px_var(--color-primary)]"
+        className="h-11 rounded-xl px-5 shadow-[0_6px_16px_-8px_var(--color-brand-600)]"
         disabled={loading}
       >
         {loading ? "Reading…" : "Explain it"}
@@ -457,32 +456,33 @@ function LoadingState({ ticker }: { ticker: string }) {
       {/* Header skeleton */}
       <Card className={cardShell}>
         <CardContent className="flex flex-col gap-3 py-2">
-          <Skeleton className="h-7 w-64 bg-white/[0.06]" />
-          <Skeleton className="h-4 w-80 bg-white/[0.06]" />
+          <Skeleton className="h-7 w-64" />
+          <Skeleton className="h-4 w-80" />
         </CardContent>
       </Card>
       {/* Grid skeleton mirroring the result layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <div className="flex flex-col gap-6 lg:col-span-3">
-          <div className="rounded-2xl border border-primary/20 bg-card p-6 shadow-[0_0_50px_-18px_var(--color-primary)]">
+          {/* mirrors the "What most people miss" hero treatment */}
+          <div className="rounded-2xl bg-card p-6 shadow-card-lg ring-1 ring-brand-200/70">
             <div className="flex items-center gap-3">
-              <Skeleton className="size-9 rounded-xl bg-primary/15" />
-              <Skeleton className="h-6 w-56 bg-white/[0.07]" />
+              <Skeleton className="size-9 rounded-xl bg-brand-100" />
+              <Skeleton className="h-6 w-56" />
             </div>
             <div className="mt-6 flex flex-col gap-4">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="rounded-xl bg-white/[0.03] p-4">
-                  <Skeleton className="h-4 w-full bg-white/[0.06]" />
-                  <Skeleton className="mt-2 h-4 w-4/5 bg-white/[0.06]" />
+                <div key={i} className="rounded-xl bg-brand-50/60 p-4">
+                  <Skeleton className="h-4 w-full bg-sand-200/70" />
+                  <Skeleton className="mt-2 h-4 w-4/5 bg-sand-200/70" />
                 </div>
               ))}
             </div>
           </div>
           <div className="flex flex-col gap-3">
-            <Skeleton className="h-5 w-36 bg-white/[0.06]" />
-            <Skeleton className="h-4 w-full bg-white/[0.06]" />
-            <Skeleton className="h-4 w-full bg-white/[0.06]" />
-            <Skeleton className="h-4 w-3/4 bg-white/[0.06]" />
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
           </div>
         </div>
         <div className="flex flex-col gap-6 lg:col-span-2">
@@ -490,16 +490,16 @@ function LoadingState({ ticker }: { ticker: string }) {
             {Array.from({ length: 3 }).map((_, i) => (
               <Card key={i} className={cardShell}>
                 <CardContent className="flex flex-col gap-2 py-1">
-                  <Skeleton className="h-3 w-12 bg-white/[0.06]" />
-                  <Skeleton className="h-6 w-16 bg-white/[0.06]" />
+                  <Skeleton className="h-3 w-12" />
+                  <Skeleton className="h-6 w-16" />
                 </CardContent>
               </Card>
             ))}
           </div>
           <Card className={cardShell}>
             <CardContent className="flex flex-col gap-3 py-2">
-              <Skeleton className="h-4 w-32 bg-white/[0.06]" />
-              <Skeleton className="h-44 w-full bg-white/[0.05]" />
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-44 w-full" />
             </CardContent>
           </Card>
         </div>
@@ -512,9 +512,9 @@ function LoadingState({ ticker }: { ticker: string }) {
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <Card className={cn(cardShell, "max-w-2xl border-destructive/20 ring-destructive/20")}>
+    <Card className={cn(cardShell, "max-w-2xl ring-destructive/25")}>
       <CardContent className="flex items-start gap-3 py-1">
-        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive/15">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
           <AlertCircle className="size-4 text-destructive" aria-hidden />
         </span>
         <div className="flex flex-col gap-1">
@@ -552,8 +552,10 @@ function Results({ data }: { data: FilingApiSuccess }) {
         <CardContent className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 py-2">
           <div className="flex flex-col gap-1.5">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <h2 className="text-2xl font-semibold tracking-tight">{snapshot.companyName}</h2>
-              <span className="rounded-md bg-primary/15 px-2 py-0.5 text-sm font-medium tracking-wide text-accent-foreground">
+              <h2 className="font-display text-2xl font-medium tracking-tight">
+                {snapshot.companyName}
+              </h2>
+              <span className="rounded-md bg-accent px-2 py-0.5 text-sm font-medium tracking-wide text-accent-foreground ring-1 ring-brand-100">
                 {snapshot.ticker}
               </span>
             </div>
@@ -576,7 +578,7 @@ function Results({ data }: { data: FilingApiSuccess }) {
               rel="noopener noreferrer"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "gap-2 rounded-xl border-white/10 bg-background/40",
+                "gap-2 rounded-xl bg-card",
               )}
             >
               Read the official report
@@ -594,14 +596,18 @@ function Results({ data }: { data: FilingApiSuccess }) {
           aria-label="What most people miss"
           className="lg:col-span-3 lg:col-start-1 lg:row-start-1"
         >
-          <div className="relative h-full overflow-hidden rounded-2xl border border-primary/30 bg-card p-6 shadow-[0_0_60px_-15px_var(--color-primary)] sm:p-8">
+          {/* The signature section: same card language as everything else,
+              but set apart by a brand-blue hairline ring, a whisper of blue
+              in the top-left corner, and the deeper shadow-card-lg. Calm,
+              not loud — no glows. */}
+          <div className="relative h-full overflow-hidden rounded-2xl bg-card p-6 shadow-card-lg ring-1 ring-brand-200/70 sm:p-8">
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_60%_at_20%_0%,--theme(--color-primary/18%),transparent_60%)]"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_60%_at_20%_0%,--theme(--color-brand-100/45%),transparent_60%)]"
             />
             <div className="relative flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/40">
-                <Eye className="size-5 text-accent-foreground" aria-hidden />
+              <span className="flex size-10 items-center justify-center rounded-xl bg-brand-600/10 ring-1 ring-brand-600/20">
+                <Eye className="size-5 text-brand-700" aria-hidden />
               </span>
               <div className="flex flex-col">
                 <h2 className="text-xl font-semibold tracking-tight">What most people miss</h2>
@@ -616,10 +622,10 @@ function Results({ data }: { data: FilingApiSuccess }) {
                 {sections.downplaying.map((b, i) => (
                   <li
                     key={i}
-                    className="flex gap-4 rounded-xl bg-white/[0.03] p-4 ring-1 ring-white/[0.05]"
+                    className="flex gap-4 rounded-xl bg-brand-50/60 p-4 ring-1 ring-brand-100/70"
                   >
                     <span
-                      className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-[13px] font-semibold tabular-nums text-accent-foreground"
+                      className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-[13px] font-semibold tabular-nums text-brand-700"
                       aria-hidden
                     >
                       {i + 1}
@@ -760,7 +766,7 @@ function StatCard({
   emphasizeChangeColor?: boolean;
 }) {
   const up = change !== null && change >= 0;
-  const changeColor = up ? "text-emerald-400" : "text-red-400";
+  const changeColor = up ? "text-up" : "text-down";
   return (
     <Card className={cardShell}>
       <CardContent className="flex flex-col gap-1 px-3 py-1">
@@ -822,7 +828,7 @@ function SecondaryMetrics({ metrics }: { metrics: FilingApiSuccess["snapshot"]["
     },
   ];
   return (
-    <dl className="mt-3 flex flex-col divide-y divide-white/[0.05]">
+    <dl className="mt-3 flex flex-col divide-y divide-border/70">
       {rows.map(({ label, explain, metric, fmt }) => (
         <div key={label} className="flex items-baseline justify-between gap-4 py-2.5">
           <dt className="flex flex-col">

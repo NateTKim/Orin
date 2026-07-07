@@ -45,9 +45,9 @@ export function PortfolioGrid({ initialStocks }: { initialStocks: SavedStock[] }
 
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/[0.06] bg-card/40 px-6 py-16 text-center shadow-[0_8px_30px_rgba(0,0,0,0.25)]">
-      <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/15 ring-1 ring-primary/25">
-        <Bookmark className="size-6 text-accent-foreground" aria-hidden />
+    <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-6 py-16 text-center shadow-card ring-1 ring-sand-900/8">
+      <span className="flex size-14 items-center justify-center rounded-2xl bg-brand-50 ring-1 ring-brand-100">
+        <Bookmark className="size-6 text-brand-700" aria-hidden />
       </span>
       <h2 className="text-lg font-semibold tracking-tight">Your portfolio is empty</h2>
       <p className="max-w-sm text-sm leading-6 text-muted-foreground">

@@ -6,8 +6,7 @@ import { Bookmark, BookmarkCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FeedItem } from "@/lib/discover/types.ts";
 
-const cardShell =
-  "rounded-2xl bg-gradient-to-b from-white/[0.03] to-transparent ring-1 ring-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.35)]";
+const cardShell = "rounded-2xl bg-card ring-1 ring-sand-900/8 shadow-card";
 
 /** Neutral, factual "how recently" label from a filing date. */
 function filedAgo(iso: string): string {
@@ -55,7 +54,7 @@ export function FeedCard({
         )}
       >
         <div className="flex items-start gap-3">
-          <span className="rounded-md bg-primary/15 px-2 py-0.5 text-sm font-medium tracking-wide text-accent-foreground">
+          <span className="rounded-md bg-accent px-2 py-0.5 text-sm font-medium tracking-wide text-accent-foreground ring-1 ring-brand-100">
             {item.ticker}
           </span>
           {/* right side kept clear for the save control (absolute, below) */}
@@ -84,8 +83,8 @@ export function FeedCard({
           className={cn(
             "absolute right-3 top-3 flex size-8 items-center justify-center rounded-lg ring-1 backdrop-blur transition-colors",
             saved
-              ? "bg-primary/20 text-accent-foreground ring-primary/40"
-              : "bg-background/70 text-muted-foreground ring-white/10 hover:text-foreground",
+              ? "bg-brand-100 text-brand-700 ring-brand-200"
+              : "bg-card/90 text-muted-foreground shadow-card ring-sand-900/10 hover:text-foreground",
             pending && "opacity-60",
           )}
         >
@@ -96,7 +95,7 @@ export function FeedCard({
           <button
             type="button"
             aria-label={`Sign in to save ${item.ticker}`}
-            className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-lg bg-background/70 text-muted-foreground ring-1 ring-white/10 backdrop-blur transition-colors hover:text-foreground"
+            className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-lg bg-card/90 text-muted-foreground shadow-card ring-1 ring-sand-900/10 backdrop-blur transition-colors hover:text-foreground"
           >
             <Bookmark className="size-4" aria-hidden />
           </button>

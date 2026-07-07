@@ -36,7 +36,7 @@ function ChartTooltip({
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="rounded-lg border border-white/10 bg-popover px-3 py-2 text-xs shadow-xl">
+    <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-card-lg">
       <p className="font-medium text-foreground">{d.label}</p>
       <p className="mt-1 tabular-nums text-foreground">
         {formatUsd(d.revenue)}
@@ -69,7 +69,7 @@ export function RevenueChart({ history }: { history: HistoryPoint[] }) {
               <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.06)" />
+          <CartesianGrid vertical={false} stroke="var(--color-border)" strokeOpacity={0.7} />
           <XAxis
             dataKey="label"
             tickLine={false}
@@ -85,7 +85,7 @@ export function RevenueChart({ history }: { history: HistoryPoint[] }) {
             tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
             domain={["auto", "auto"]}
           />
-          <Tooltip content={<ChartTooltip />} cursor={{ stroke: "rgba(255,255,255,0.15)" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ stroke: "var(--color-sand-300)" }} />
           <Area
             type="monotone"
             dataKey="revenue"

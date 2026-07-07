@@ -30,12 +30,12 @@ export function DashboardSearch() {
         placeholder="Look up a company, e.g. AAPL"
         aria-label="Stock ticker"
         maxLength={10}
-        className="h-11 w-full max-w-56 rounded-xl border-white/10 bg-card text-base shadow-inner"
+        className="h-11 w-full max-w-56 rounded-xl bg-card text-base shadow-card"
       />
       <Button
         type="submit"
         size="lg"
-        className="h-11 rounded-xl px-5 shadow-[0_0_24px_-6px_var(--color-primary)]"
+        className="h-11 rounded-xl px-5 shadow-[0_6px_16px_-8px_var(--color-brand-600)]"
       >
         Explain it
       </Button>
