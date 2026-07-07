@@ -1,7 +1,7 @@
 # PROGRESS.md — where Orin stands
 
 Living status doc. Read this + `ARCHITECTURE.md` + `DESIGN.md` after `CLAUDE.md`/`PROJECT.md`
-to pick up the project. Last updated: 2026-07-05.
+to pick up the project. Last updated: 2026-07-06.
 
 > Note: `CLAUDE.md`/`PROJECT.md` describe the *original* MVP (no DB, no auth, dark stack
 > "locked"). The project has since deliberately grown past that under the owner's direction —
@@ -30,8 +30,13 @@ below is on `main` and deployed:
   remove on hover; card → full analysis. Row Level Security scopes saves per user.
 - **Discovery feed** — public `/discover`: ~40 curated large caps by most recent filing,
   newest first, neutral framing; cards click into analysis; save from a card. Cached 6h.
-- **Landing page** — warm-free marketing hero with one animated glow, "how it works", trust
-  line. (Visually about to change — see below.)
+- **Landing page** — the warm "sunrise" marketing moment: illustrated dawn scene (sky
+  gradient, stars, rising sun, mountain horizon, mist — all CSS/SVG), serif display
+  headline, floating search pill.
+- **Warm redesign, BOTH passes done** — Pass 1 (design tokens + landing) and Pass 2 (results,
+  dashboard, discover converted to the calm warm-light workspace; legacy dark theme fully
+  removed). Tokens and rules documented in `DESIGN.md`. **The app is feature-complete and
+  visually redesigned.**
 
 ## What's verified vs. not
 
@@ -43,21 +48,24 @@ below is on `main` and deployed:
   owner plans a "super test" once all features are in. Treat the logged-in save paths as
   "should work, lightly tested."
 
-## Next planned step — two-pass visual redesign
+## Next planned step — launch-readiness fixes
 
-The app currently uses a **dark navy + indigo/violet** theme. We are deliberately moving away
-from that "default AI app" look toward something **warm, premium, human, trustworthy**. Full
-direction and tokens are in `DESIGN.md`. Plan:
+A full security/reliability/cost audit was done on 2026-07-06. **The execution plan lives in
+`LAUNCH_READINESS.md`** — prioritized Critical / Important / Nice-to-have items, each marked
+[CODE] (assistant) or [MANUAL] (owner dashboard task), with the exact SQL and the agreed
+rate-limiting approach included. Work top to bottom; the Verified-good section lists what was
+already audited clean so it doesn't get re-investigated.
 
-- **Pass 1 — design system + landing page.** Establish the design tokens (warm-leaning blue
-  accent, warm off-white app base, green/red kept for up/down, type hierarchy, rounded
-  friendly cards) and rebuild the landing page as the warm "sunrise" marketing moment.
-- **Pass 2 — restyle the app screens.** Re-skin results, dashboard, and discover to the calm
-  warm-light system. No behavior changes — presentation only.
-
-Start with Pass 1. Nothing about data/extraction/caching/auth should change during the redesign.
+**Deploy hygiene to sort FIRST (branch state as of 2026-07-06):** local `main` is 2 commits
+ahead of `origin/main` (unpushed Pass 1); Pass 2 is commit `85c6d7f` ("Frontend change") on
+`feature/redesign-pass2`, **unmerged**; the audit docs + dashboard copy fix are on
+`feature/prod-readiness` (branched off `85c6d7f`). Merge pass2 → main, then prod-readiness
+work → main, push, deploy, re-point the alias.
 
 ## Known issues / loose ends / TODOs
+
+> The launch-blocking subset of these now lives, with fix details, in `LAUNCH_READINESS.md` —
+> that file is the source of truth for pre-launch work.
 
 - **Clerk is on DEV keys in production** (`pk_test_`/`sk_test_`). Works, but shows a Clerk dev
   banner and uses shared Google OAuth. Before a real launch: create a Clerk **production

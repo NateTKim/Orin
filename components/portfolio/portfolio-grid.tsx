@@ -51,8 +51,11 @@ function EmptyState() {
       </span>
       <h2 className="text-lg font-semibold tracking-tight">Your portfolio is empty</h2>
       <p className="max-w-sm text-sm leading-6 text-muted-foreground">
-        Search for a company and tap <span className="font-medium text-foreground">Save</span> to
-        add it here. Next time, you&apos;ll jump straight to its analysis.
+        {/* Explicit {" "} so the JSX transform can never swallow the spaces
+            around the styled word. */}
+        Search for a company and tap{" "}
+        <span className="font-medium text-foreground">Save</span>{" "}
+        to add it here. Next time, you&apos;ll jump straight to its analysis.
       </p>
       <a
         href="#dashboard-search"
