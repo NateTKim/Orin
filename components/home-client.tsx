@@ -36,6 +36,10 @@ type ViewState =
    warm shadow, hairline warm ring — same language as the landing cards. */
 const cardShell = "rounded-2xl bg-card shadow-card ring-sand-900/8";
 
+/* A few recognizable large caps, offered as one-tap suggestions under the
+   landing search box so a first-time visitor isn't staring at a blank field. */
+const SUGGESTED_TICKERS = ["AAPL", "NVDA", "TSLA", "AMZN"];
+
 export function HomeClient({ initialTicker }: { initialTicker?: string }) {
   const seed = initialTicker?.trim().toUpperCase() ?? "";
   const [ticker, setTicker] = useState(seed);
@@ -77,7 +81,7 @@ export function HomeClient({ initialTicker }: { initialTicker?: string }) {
   if (view.kind === "idle") {
     return (
       <div className="relative min-h-screen overflow-x-clip bg-background">
-        <Landing ticker={ticker} setTicker={setTicker} onSubmit={lookup} />
+        <Landing ticker={ticker} setTicker={setTicker} onSubmit={lookup} onPick={runLookup} />
       </div>
     );
   }
@@ -210,10 +214,13 @@ function Landing({
   ticker,
   setTicker,
   onSubmit,
+  onPick,
 }: {
   ticker: string;
   setTicker: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  /** Runs a lookup directly for a tapped suggestion chip. */
+  onPick: (ticker: string) => void;
 }) {
   return (
     <div className="relative isolate flex flex-col">
@@ -368,6 +375,22 @@ function Landing({
           />
         </div>
         <p className="mt-4 text-sm text-sand-600">Free · no account needed</p>
+
+        {/* One-tap suggestions — a soft nudge past the blank-box moment. Small,
+            quiet pills so they read as a helpful starting point, not CTAs. */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <span className="text-xs text-sand-600">Try</span>
+          {SUGGESTED_TICKERS.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => onPick(t)}
+              className="rounded-full bg-card/80 px-3 py-1 text-xs font-medium text-sand-700 shadow-card ring-1 ring-sand-900/8 backdrop-blur-sm transition-colors hover:text-brand-700 hover:ring-brand-300"
+            >
+              {t}
+            </button>
+          ))}
+        </div>
       </section>
 
       {/* How it works */}
