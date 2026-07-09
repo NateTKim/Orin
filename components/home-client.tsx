@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -222,6 +222,53 @@ function Landing({
   /** Runs a lookup directly for a tapped suggestion chip. */
   onPick: (ticker: string) => void;
 }) {
+  // Gentle scene parallax: pointer position (fine pointers only) and scroll
+  // write CSS vars onto the backdrop; each layer translates by its own depth
+  // factor (see .orin-plx in globals.css). rAF-throttled, direct style writes
+  // (no React re-renders), and skipped entirely under reduced motion — the
+  // CSS transform then stays at identity since the vars default to 0.
+  const backdropRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = backdropRef.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let raf = 0;
+    let mx = 0;
+    let my = 0;
+    let sy = 0;
+    const apply = () => {
+      raf = 0;
+      el.style.setProperty("--mx", mx.toFixed(3));
+      el.style.setProperty("--my", my.toFixed(3));
+      el.style.setProperty("--sy", sy.toFixed(1));
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    const onMove = (e: PointerEvent) => {
+      mx = (e.clientX / window.innerWidth - 0.5) * 2;
+      my = (e.clientY / window.innerHeight - 0.5) * 2;
+      schedule();
+    };
+    const onScroll = () => {
+      sy = Math.min(window.scrollY, 240);
+      schedule();
+    };
+
+    // Touch devices get the scroll-based parallax only.
+    const finePointer = window.matchMedia("(pointer: fine)").matches;
+    if (finePointer) window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      if (finePointer) window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
   return (
     <div className="relative isolate flex flex-col">
       {/* Sunrise backdrop — a static illustrated dawn in cheap layers: the
@@ -230,14 +277,23 @@ function Landing({
           band of valley mist. No images, no filters, no animation — masked
           so everything dissolves into the paper background (globals.css). */}
       <div
+        ref={backdropRef}
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px] overflow-hidden sm:h-[640px]"
       >
-        <div className="orin-sunrise absolute inset-0" />
+        {/* Every parallax layer bleeds 24px past the container's top and
+            sides (-inset-x-6 / -top-6) so its edges can never slide into
+            view — translations max out well under 24px. Bottoms stay
+            anchored: the scene already fades to paper there. */}
+        <div
+          className="orin-sunrise orin-plx absolute -inset-x-6 -top-6 bottom-0"
+          style={{ "--plx": 4, "--ply": 3, "--pls": 0.05 } as React.CSSProperties}
+        />
 
         {/* Fading stars in the still-blue part of the sky */}
         <svg
-          className="orin-stars absolute inset-x-0 top-0 h-[280px] w-full"
+          className="orin-stars orin-plx absolute -inset-x-6 -top-6 h-[304px]"
+          style={{ "--plx": 7, "--ply": 5, "--pls": 0.04, width: "calc(100% + 3rem)" } as React.CSSProperties}
           viewBox="0 0 1440 280"
           preserveAspectRatio="xMidYMin slice"
           fill="white"
@@ -263,19 +319,38 @@ function Landing({
         </svg>
 
         {/* Soft cloud wisps — desktop only, kept near the edges so the sky
-            behind the headline stays calm. */}
-        <div className="orin-cloud absolute left-[6%] top-[130px] hidden h-10 w-64 sm:block" />
-        <div className="orin-cloud absolute right-[4%] top-[210px] hidden h-12 w-80 sm:block" />
-        <div className="orin-cloud absolute right-[22%] top-[90px] hidden h-8 w-48 opacity-70 sm:block" />
+            behind the headline stays calm. Each drifts at its own slow tempo
+            (see .orin-cloud in globals.css); the wrapper carries their
+            parallax depth so drift and parallax transforms don't collide. */}
+        <div
+          className="orin-plx absolute -inset-x-6 -top-6 bottom-0"
+          style={{ "--plx": 12, "--ply": 8, "--pls": 0.03 } as React.CSSProperties}
+        >
+          <div
+            className="orin-cloud absolute left-[6%] top-[130px] hidden h-10 w-64 sm:block"
+            style={{ animationDuration: "26s" }}
+          />
+          <div
+            className="orin-cloud absolute right-[4%] top-[210px] hidden h-12 w-80 sm:block"
+            style={{ animationDuration: "34s", animationDelay: "-14s" }}
+          />
+          <div
+            className="orin-cloud absolute right-[22%] top-[90px] hidden h-8 w-48 opacity-70 sm:block"
+            style={{ animationDuration: "42s", animationDelay: "-27s" }}
+          />
+        </div>
 
-        {/* Dawn horizon: the rising sun plus five ranges receding with
+        {/* Dawn horizon: the rising sun plus six ranges receding with
             atmospheric perspective — coolest and lightest at the back,
             warming and firming toward the front; one mid range picks up
-            the sunrise light via a gradient fill. The sun lives INSIDE
-            this SVG so the ranges genuinely occlude its lower half at
-            every viewport size. Bases fade out via the .orin-horizon mask. */}
+            the sunrise light via a gradient fill, haze bands pool between
+            ridges, and a wide light-band glows on the middle distance. The
+            sun lives INSIDE this SVG so the ranges genuinely occlude its
+            lower half at every viewport size; on load the whole sun group
+            rises into place (.orin-sun). Bases fade via .orin-horizon. */}
         <svg
-          className="orin-horizon absolute inset-x-0 bottom-0 h-24 w-full sm:h-40"
+          className="orin-horizon orin-plx absolute -inset-x-6 bottom-0 h-24 sm:h-40"
+          style={{ "--plx": 16, "--ply": 10, "--pls": 0.02, width: "calc(100% + 3rem)" } as React.CSSProperties}
           viewBox="0 0 1440 320"
           preserveAspectRatio="none"
         >
@@ -291,6 +366,14 @@ function Landing({
               <stop offset="62%" stopColor="oklch(0.98 0.07 82)" stopOpacity="0.9" />
               <stop offset="100%" stopColor="oklch(0.97 0.08 75)" stopOpacity="0" />
             </radialGradient>
+            <radialGradient id="orinHorizonGlow">
+              <stop offset="0%" stopColor="oklch(0.97 0.06 78)" stopOpacity="0.7" />
+              <stop offset="100%" stopColor="oklch(0.97 0.06 78)" stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id="orinHaze" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="oklch(0.99 0.01 85)" stopOpacity="0" />
+              <stop offset="100%" stopColor="oklch(0.99 0.01 85)" stopOpacity="0.55" />
+            </linearGradient>
             <linearGradient id="orinLitRange" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="oklch(0.84 0.04 345)" />
               <stop offset="50%" stopColor="oklch(0.89 0.055 55)" />
@@ -298,15 +381,42 @@ function Landing({
             </linearGradient>
           </defs>
 
-          {/* the sun: wide soft bloom + flattened glowing disc, low in the
-              center valley (drawn first so every range overlaps it) */}
-          {/* off-center so it rises into open sky instead of hiding behind
-              the search pill */}
-          <ellipse cx="990" cy="135" rx="320" ry="140" fill="url(#orinSunGlow)" />
-          <circle cx="990" cy="110" r="72" fill="url(#orinSunCore)" />
+          {/* The sun: an outer bloom, the breathing inner bloom, and the
+              flattened glowing disc — grouped so the whole light source
+              rises into place on load. Off-center so it climbs into open
+              sky instead of hiding behind the search pill. */}
+          <g className="orin-sun">
+            <g opacity="0.5">
+              <ellipse
+                className="orin-sun-glow"
+                style={{ animationDuration: "8.5s" }}
+                cx="990"
+                cy="140"
+                rx="520"
+                ry="200"
+                fill="url(#orinSunGlow)"
+              />
+            </g>
+            <ellipse
+              className="orin-sun-glow"
+              cx="990"
+              cy="135"
+              rx="320"
+              ry="140"
+              fill="url(#orinSunGlow)"
+            />
+            <circle cx="990" cy="110" r="72" fill="url(#orinSunCore)" />
+          </g>
 
-          {/* ranges, farthest → nearest. The two most distant are
-              desktop-only: compressed onto a phone width they turn to noise. */}
+          {/* ranges, farthest → nearest, with haze pooling between ridges.
+              The three most distant are desktop-only: compressed onto a
+              phone width they turn to noise. */}
+          <path
+            className="hidden sm:block"
+            d="M0,158 L110,132 L230,152 L360,118 L500,146 L640,126 L780,150 L920,122 L1060,148 L1200,128 L1330,150 L1440,134 L1440,320 L0,320 Z"
+            fill="var(--color-brand-200)"
+            fillOpacity="0.28"
+          />
           <path
             className="hidden sm:block"
             d="M0,175 L120,142 L250,170 L380,126 L520,162 L640,144 L760,168 L880,136 L1000,164 L1120,140 L1250,168 L1360,148 L1440,160 L1440,320 L0,320 Z"
@@ -319,16 +429,31 @@ function Landing({
             fill="oklch(0.86 0.03 340)"
             fillOpacity="0.55"
           />
+          {/* haze pooling on the far ranges' lower slopes (desktop) */}
+          <rect
+            className="hidden sm:block"
+            x="0"
+            y="170"
+            width="1440"
+            height="80"
+            fill="url(#orinHaze)"
+            opacity="0.6"
+          />
           <path
             d="M0,248 L170,196 L315,238 L480,180 L650,246 L830,198 L1000,248 L1160,206 L1310,242 L1440,212 L1440,320 L0,320 Z"
             fill="oklch(0.84 0.045 350)"
             fillOpacity="0.55"
           />
+          {/* haze between the mid and near ranges (all sizes) */}
+          <rect x="0" y="212" width="1440" height="78" fill="url(#orinHaze)" opacity="0.55" />
           <path
             d="M0,268 L190,228 L370,262 L560,214 L760,266 L950,226 L1130,264 L1290,238 L1440,258 L1440,320 L0,320 Z"
             fill="url(#orinLitRange)"
             fillOpacity="0.6"
           />
+          {/* the sun's light glowing on the middle distance, with the
+              nearest range silhouetted against it */}
+          <ellipse cx="990" cy="252" rx="430" ry="58" fill="url(#orinHorizonGlow)" />
           <path
             d="M0,296 L215,252 L440,288 L665,268 L920,292 L1140,258 L1440,284 L1440,320 L0,320 Z"
             fill="oklch(0.85 0.052 58)"
@@ -337,7 +462,13 @@ function Landing({
         </svg>
 
         {/* morning mist pooling over the mountain bases */}
-        <div className="orin-mist absolute inset-x-0 bottom-0 h-14 sm:h-20" />
+        <div
+          className="orin-mist orin-plx absolute -inset-x-6 bottom-0 h-14 sm:h-20"
+          style={{ "--plx": 20, "--ply": 12, "--pls": 0.015 } as React.CSSProperties}
+        />
+
+        {/* film grain over the whole scene — static, illustrated texture */}
+        <div className="orin-grain absolute inset-0" />
       </div>
 
       {/* Top bar: wordmark left, discovery + account right */}
@@ -353,19 +484,29 @@ function Landing({
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Hero — content eases up into place on load, one element after the
+          next (--fade-order sets each element's slot in the stagger). */}
       <section className="flex flex-col items-center px-6 pt-14 pb-16 text-center sm:pt-24 sm:pb-24">
-        <h1 className="max-w-3xl text-balance font-display text-5xl font-medium leading-[1.06] tracking-tight text-foreground sm:text-7xl">
+        <h1
+          className="orin-fade-up max-w-3xl text-balance font-display text-5xl font-medium leading-[1.06] tracking-tight text-foreground sm:text-7xl"
+          style={{ "--fade-order": 0 } as React.CSSProperties}
+        >
           Understand what you own
         </h1>
         {/* sand-600 (not muted-foreground): this copy sits on the tinted
             sunrise wash, so it needs one step more contrast than plain paper */}
-        <p className="mt-6 max-w-xl text-balance text-base leading-7 text-sand-600 sm:text-lg sm:leading-8">
+        <p
+          className="orin-fade-up mt-6 max-w-xl text-balance text-base leading-7 text-sand-600 sm:text-lg sm:leading-8"
+          style={{ "--fade-order": 1 } as React.CSSProperties}
+        >
           Orin reads company earnings reports and tells you in plain English what&apos;s
           really going on — including what most people miss.
         </p>
 
-        <div className="mt-10 flex w-full justify-center">
+        <div
+          className="orin-fade-up mt-10 flex w-full justify-center"
+          style={{ "--fade-order": 2 } as React.CSSProperties}
+        >
           <SearchForm
             ticker={ticker}
             setTicker={setTicker}
@@ -374,11 +515,19 @@ function Landing({
             variant="hero"
           />
         </div>
-        <p className="mt-4 text-sm text-sand-600">Free · no account needed</p>
+        <p
+          className="orin-fade-up mt-4 text-sm text-sand-600"
+          style={{ "--fade-order": 3 } as React.CSSProperties}
+        >
+          Free · no account needed
+        </p>
 
         {/* One-tap suggestions — a soft nudge past the blank-box moment. Small,
             quiet pills so they read as a helpful starting point, not CTAs. */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+        <div
+          className="orin-fade-up mt-6 flex flex-wrap items-center justify-center gap-2"
+          style={{ "--fade-order": 4 } as React.CSSProperties}
+        >
           <span className="text-xs text-sand-600">Try</span>
           {SUGGESTED_TICKERS.map((t) => (
             <button

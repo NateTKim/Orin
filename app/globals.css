@@ -163,9 +163,13 @@
   background:
     /* sun glow — low and right of center, above the SVG sun on the horizon */
     radial-gradient(52% 36% at 69% 58%, oklch(0.955 0.07 75 / 90%), transparent 72%),
+    /* a warmer gold streak hugging the horizon around the sun */
+    radial-gradient(40% 16% at 69% 68%, oklch(0.93 0.085 72 / 55%), transparent 72%),
     /* rose flank (left) and peach flank (right) */
     radial-gradient(60% 48% at 14% 18%, oklch(0.92 0.05 15 / 65%), transparent 72%),
     radial-gradient(58% 44% at 86% 24%, oklch(0.93 0.065 50 / 70%), transparent 72%),
+    /* a faint high rose wisp for dawn color richness up left */
+    radial-gradient(46% 22% at 24% 32%, oklch(0.915 0.055 345 / 32%), transparent 72%),
     /* the sky: blue → rose → peach → gold → paper */
     linear-gradient(
       to bottom,
@@ -177,6 +181,14 @@
       transparent 100%
     );
   mask-image: linear-gradient(to bottom, black 58%, transparent 100%);
+}
+
+/* Film-grain texture over the whole scene — the "printed illustration" feel.
+   A tiny tiled SVG noise, rasterized once by the browser; at 4% opacity it
+   reads as craft, not dirt. Static (not parallaxed), pointer-events none. */
+.orin-grain {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.55'/></svg>");
+  opacity: 0.04;
 }
 
 /* Companion layers for the sunrise scene (see the Landing hero backdrop).
@@ -201,4 +213,113 @@
 .orin-cloud {
   /* one soft wisp — an elongated pastel bloom, no filters */
   background: radial-gradient(50% 50% at 50% 50%, oklch(0.975 0.018 60 / 60%), transparent 70%);
+}
+
+/* ---------------------------------------------------------------------------
+   Hero motion — the landing page's one animated moment (app screens stay
+   calm). Layers: content sweeps up into place on load, the sun rises once
+   and its bloom visibly breathes, stars twinkle, clouds drift, and the
+   scene parallaxes gently with the pointer/scroll (JS sets --mx/--my/--sy
+   on the backdrop; each layer picks its own depth factors). Everything is
+   transform/opacity only (compositor-friendly, cheap on phones) and defined
+   ONLY inside the no-preference media query — with reduced motion the scene
+   is simply static and fully visible, since the "from" states and parallax
+   transform exist only here.
+--------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  /* Content sweeping up into place on load, staggered per element. */
+  @keyframes orin-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(28px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .orin-fade-up {
+    animation: orin-fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--fade-order, 0) * 140ms);
+  }
+
+  /* The sun rising into place on load (runs once, on its SVG group)… */
+  @keyframes orin-sun-rise {
+    from {
+      transform: translateY(34px);
+    }
+    to {
+      transform: none;
+    }
+  }
+  .orin-sun {
+    animation: orin-sun-rise 2.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* …and its bloom visibly breathing — light strengthening at dawn. */
+  @keyframes orin-sun-breathe {
+    from {
+      opacity: 0.55;
+      transform: scale(0.94);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+  .orin-sun-glow {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: orin-sun-breathe 6s ease-in-out infinite alternate;
+  }
+
+  /* Twinkle. One keyframe, three tempo groups via nth-child so neighbors
+     never pulse in sync. Overrides each star's static opacity attribute,
+     which is fine — the variance now comes from the stagger. */
+  @keyframes orin-twinkle {
+    0%,
+    100% {
+      opacity: 0.05;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+  .orin-stars circle {
+    animation: orin-twinkle 4.2s ease-in-out infinite;
+  }
+  .orin-stars circle:nth-child(3n) {
+    animation-duration: 5.4s;
+    animation-delay: 1.4s;
+  }
+  .orin-stars circle:nth-child(3n + 1) {
+    animation-duration: 6.6s;
+    animation-delay: 3.1s;
+  }
+
+  /* Clouds drifting — per-element duration/delay set inline. */
+  @keyframes orin-drift {
+    from {
+      transform: translateX(-36px);
+    }
+    to {
+      transform: translateX(36px);
+    }
+  }
+  .orin-cloud {
+    animation: orin-drift 34s ease-in-out infinite alternate;
+  }
+
+  /* Parallax depth. JS writes --mx/--my (pointer, -1..1) and --sy (clamped
+     scroll px) onto the backdrop container; each layer declares how far it
+     shifts via --plx/--ply (px at full pointer deflection) and --pls
+     (fraction of scroll). Scene shifts opposite the pointer for depth. */
+  .orin-plx {
+    transform: translate3d(
+      calc(var(--mx, 0) * var(--plx, 0) * -1px),
+      calc(var(--my, 0) * var(--ply, 0) * -1px + var(--sy, 0) * var(--pls, 0) * 1px),
+      0
+    );
+    will-change: transform;
+  }
 }
