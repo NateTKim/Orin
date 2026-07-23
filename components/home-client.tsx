@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RevenueChart } from "@/components/revenue-chart";
+import { BusinessHealth } from "@/components/business-health";
 import { AuthControls } from "@/components/auth-controls";
 import { DiscoverLink } from "@/components/discover-link";
 import { SaveButton } from "@/components/portfolio/save-button";
@@ -759,6 +760,9 @@ function Results({ data }: { data: FilingApiSuccess }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Business Health — glanceable signal right under the company header. */}
+      <BusinessHealth snapshot={snapshot} />
 
       {/* Bento grid: insights + summary in the primary column, numbers in the
           secondary column. Single column on mobile, insights first. */}
