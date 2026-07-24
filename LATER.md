@@ -21,9 +21,15 @@ Deferred ideas. Nothing here gets built until it's deliberately pulled into scop
   be driven by popularity/sector filters. (Currently a hand-picked list in `lib/discover/companies.ts`.)
 
 ### Richer cards (slots already exist in the components)
-- **Richer portfolio + feed cards** — the `StockCard` and `FeedCard` components have explicit
-  `FUTURE CONTENT` slots. Ideas: a one-line preview insight, a revenue-direction chip
-  (up/down), a "new filing since you saved this" badge, last-analyzed date.
+- ✅ **Richer portfolio cards** — done: `StockCard` now shows a monogram logo, Business Health
+  score + label (from cached analysis), latest filing meta, and a "new filing" badge, with a
+  grid/list toggle. (The `FeedCard` on `/discover` could get the same treatment later.)
+- **Real company logos via logo.dev** — the dashboard/portfolio cards currently use a
+  deterministic monogram badge (`components/portfolio/company-logo.tsx`) because there's no
+  clean keyless ticker-based logo API. logo.dev offers ticker-based logos on a free tier (needs
+  a publishable `NEXT_PUBLIC_` token). Wiring it is a one-file change in `company-logo.tsx`:
+  render an `<img src={https://img.logo.dev/ticker/{TICKER}?token=…}>` with an `onError`
+  fallback to the existing monogram (so a missing logo never shows a broken image).
 
 ### Alerts / notifications
 - **Filing alerts / notifications** — tell a user when a company they've saved files a new

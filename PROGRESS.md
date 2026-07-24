@@ -1,7 +1,7 @@
 # PROGRESS.md — where Orin stands
 
 Living status doc. Read this + `ARCHITECTURE.md` + `DESIGN.md` after `CLAUDE.md`/`PROJECT.md`
-to pick up the project. Last updated: 2026-07-06.
+to pick up the project. Last updated: 2026-07-08.
 
 > Note: `CLAUDE.md`/`PROJECT.md` describe the *original* MVP (no DB, no auth, dark stack
 > "locked"). The project has since deliberately grown past that under the owner's direction —
@@ -37,6 +37,25 @@ below is on `main` and deployed:
   dashboard, discover converted to the calm warm-light workspace; legacy dark theme fully
   removed). Tokens and rules documented in `DESIGN.md`. **The app is feature-complete and
   visually redesigned.**
+- **Business Health signal** (results screen) — a glanceable, deterministic 1–10 score with a
+  Strengthening/Steady/Mixed/Weakening label, computed purely from extracted metrics (no LLM,
+  same filing → same score). Six weighted signals (revenue growth, revenue-trend consistency,
+  margin direction, profitability, operating income, leverage) in `lib/health/score.ts`;
+  transparent factor chips, a deterministic plain-English "why", a "not enough data" state, a
+  profitability floor (unprofitable + worsening can't read "Steady"), a never-red debt chip,
+  and explicit not-investment-advice framing. Tuning harnesses in `scripts/health-*.ts`.
+- **Landing hero motion** — the one animated moment: staged fade-up on load, a rising +
+  breathing sun, twinkling stars, drifting clouds, and gentle pointer/scroll parallax across
+  five depth layers, plus scene enrichment (six ranges, haze, film grain). All
+  transform/opacity, `prefers-reduced-motion` honored, mobile simplified.
+- **Conversion improvements** — logged-out "Save" opens a warm benefit-framed popover
+  (reciprocity/endowment) whose sign-up/in **carries the intended save through** via a
+  one-shot `?save=1` (read reactively so the fast sign-in path doesn't lose the race); landing
+  page has one-tap ticker suggestion chips.
+- **Launch-readiness code fixes (shipped)** — per-IP rate limiting + concurrent-miss dedupe on
+  the analysis endpoint (`lib/rate-limit.ts`); server-action input validation; `middleware.ts`
+  migrated to `proxy.ts` (Next 16); foreign/ADR filer message (20-F/40-F); dashboard load-error
+  state distinct from empty. Full audit + remaining items in `LAUNCH_READINESS.md`.
 
 ## What's verified vs. not
 
@@ -47,20 +66,26 @@ below is on `main` and deployed:
 - **Not yet fully tested**: a full logged-in end-to-end sweep incl. save-from-a-feed-card. The
   owner plans a "super test" once all features are in. Treat the logged-in save paths as
   "should work, lightly tested."
+- **Save carry-through** (`?save=1` auto-save after auth): the signed-in path can't be tested
+  headlessly (Clerk bot protection), so it's verified by construction only — worth one live
+  confirm (log out → Save → sign in → lands back Saved).
 
-## Next planned step — launch-readiness fixes
+## Next planned step
 
-A full security/reliability/cost audit was done on 2026-07-06. **The execution plan lives in
-`LAUNCH_READINESS.md`** — prioritized Critical / Important / Nice-to-have items, each marked
-[CODE] (assistant) or [MANUAL] (owner dashboard task), with the exact SQL and the agreed
-rate-limiting approach included. Work top to bottom; the Verified-good section lists what was
-already audited clean so it doesn't get re-investigated.
+No single mandate in flight. All recent feature work (Business Health, hero motion, conversion
+improvements) and the launch-readiness **code** fixes are shipped, merged to `main`, and
+deployed. `main` is in sync with `origin/main`.
 
-**Deploy hygiene to sort FIRST (branch state as of 2026-07-06):** local `main` is 2 commits
-ahead of `origin/main` (unpushed Pass 1); Pass 2 is commit `85c6d7f` ("Frontend change") on
-`feature/redesign-pass2`, **unmerged**; the audit docs + dashboard copy fix are on
-`feature/prod-readiness` (branched off `85c6d7f`). Merge pass2 → main, then prod-readiness
-work → main, push, deploy, re-point the alias.
+**Remaining before a real public launch — mostly MANUAL (owner):**
+- **C2 — Clerk production keys + custom domain** (owner, dashboards). Still on DEV keys. See
+  `LAUNCH_READINESS.md` for the step-by-step; a custom domain also retires the alias chore.
+- ~~**C3 — RLS UPDATE policy on `saved_stocks`.**~~ ✅ **Done** (owner ran `supabase/rls_update.sql`
+  in the Supabase SQL editor, 2026-07-08) — the save-refresh upsert path is now unblocked.
+- **N-items** (nice-to-have, `LAUNCH_READINESS.md`): client fetch timeout, drop unused `users`
+  table, delete stale merged branches.
+
+`LAUNCH_READINESS.md` remains the source of truth for pre-launch work, including a
+Verified-good section listing what was already audited clean.
 
 ## Known issues / loose ends / TODOs
 
@@ -83,10 +108,16 @@ work → main, push, deploy, re-point the alias.
   "what most people miss" output is still good — but tightening this is a known improvement.
 - **Big filers restate huge Risk Factors** (RIVN ~227k chars); we send the first 50k. Fine, but
   noted.
-- **Stale local branches**: `feature/accounts-db`, `feature/filing-cache`, `feature/landing-page`,
-  `feature/saved-portfolio`, `feature/discover-feed` are all merged into `main` and can be
-  deleted. (`feature/saved-portfolio` was squash-merged, so git shows it "unmerged"; use `-D`.)
-- **Cost**: an uncached lookup sends ~30k input tokens (full filing sections) to Sonnet
-  (~$0.09). Cache hits cost nothing. Fine at current scale.
-- Four SQL files in `supabase/` must be run once in the Supabase SQL editor (all already run in
-  the shared project): `schema.sql`, `saved_stocks.sql`, `cache.sql`, `feed_cache.sql`.
+- **Stale local branches**: many merged feature branches remain locally (the early ones —
+  `feature/accounts-db`, `feature/filing-cache`, `feature/landing-page`, `feature/saved-portfolio`,
+  `feature/discover-feed` — plus the recent stack: `feature/redesign-pass1`, `feature/redesign-pass2`,
+  `feature/prod-readiness`, `feature/rate-limiting`, `feature/important-fixes`,
+  `feature/conversion-improvements`, `feature/hero-motion`, `feature/business-health`). All are
+  merged into `main` and can be deleted (use `-D`; some were fast-forward/squash merges).
+- **Cost / abuse**: an uncached lookup sends ~30k input tokens (full filing sections) to Sonnet
+  (~$0.09); cache hits cost nothing. The analysis endpoint now has per-IP rate limiting +
+  concurrent-miss dedupe (`lib/rate-limit.ts`) — in-memory, so per-serverless-instance (stops
+  the naive single-source spammer, not a distributed attack).
+- SQL files in `supabase/` to run once in the Supabase SQL editor: `schema.sql`,
+  `saved_stocks.sql`, `cache.sql`, `feed_cache.sql`, and `rls_update.sql` — **all run** in the
+  shared project.

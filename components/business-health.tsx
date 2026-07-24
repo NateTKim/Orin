@@ -3,22 +3,10 @@
 import { useMemo } from "react";
 import { Activity } from "lucide-react";
 import { computeBusinessHealth } from "@/lib/health/score.ts";
-import type { HealthFactor, HealthLabel } from "@/lib/health/score.ts";
+import type { HealthFactor } from "@/lib/health/score.ts";
+import { HEALTH_COLORS } from "@/lib/health/colors.ts";
 import type { FilingSnapshot } from "@/lib/edgar/types.ts";
 import { cn } from "@/lib/utils";
-
-// Per-label accent, warm-light and calm (not a traffic light). Strengthening
-// uses our green, Steady our brand blue, Mixed a warm amber, Weakening our red.
-const ACCENT: Record<HealthLabel, { text: string; tile: string; dot: string }> = {
-  Strengthening: { text: "text-up", tile: "bg-up/10 ring-up/25", dot: "bg-up" },
-  Steady: { text: "text-brand-700", tile: "bg-brand-50 ring-brand-200", dot: "bg-brand-600" },
-  Mixed: {
-    text: "text-[oklch(0.56_0.12_68)]",
-    tile: "bg-[oklch(0.96_0.04_78)] ring-[oklch(0.86_0.07_75)]",
-    dot: "bg-[oklch(0.72_0.13_72)]",
-  },
-  Weakening: { text: "text-down", tile: "bg-down/10 ring-down/25", dot: "bg-down" },
-};
 
 function FactorChip({ factor }: { factor: HealthFactor }) {
   const arrow = factor.direction === "up" ? "↑" : factor.direction === "down" ? "↓" : "→";
@@ -72,7 +60,7 @@ export function BusinessHealth({ snapshot }: { snapshot: FilingSnapshot }) {
     );
   }
 
-  const accent = ACCENT[health.label];
+  const accent = HEALTH_COLORS[health.label];
 
   return (
     <section

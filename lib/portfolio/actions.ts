@@ -9,7 +9,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server.ts";
-import type { ActionResult, SavedStock, SavedStockInput } from "@/lib/portfolio/types.ts";
+import { resolveLatestFiling } from "@/lib/edgar/snapshot.ts";
+import type {
+  ActionResult,
+  NewFilingMap,
+  SavedStock,
+  SavedStockInput,
+} from "@/lib/portfolio/types.ts";
 
 const TABLE = "saved_stocks";
 
@@ -118,6 +124,40 @@ export async function isStockSaved(ticker: string): Promise<boolean> {
     .eq("ticker", clean)
     .maybeSingle();
   return Boolean(data);
+}
+
+/**
+ * Lazily check whether any saved company has a filing newer than the one the
+ * user saved. EDGAR-ONLY: each check is a lightweight `resolveLatestFiling`
+ * (ticker map is cached in-memory; one submissions JSON per company), all
+ * rate-limited inside the EDGAR client. NO company facts, NO filing text, NO
+ * Claude — so this never triggers the expensive analysis path. Called from the
+ * client after first paint so it never blocks the dashboard render, and it
+ * degrades to "no badge" on any failure.
+ *
+ * `saved` carries each company's ticker + the accession number recorded when it
+ * was saved; we flag a newer filing when EDGAR's current latest differs.
+ */
+export async function checkForNewFilings(
+  saved: Array<{ ticker: string; accessionNumber: string }>,
+): Promise<NewFilingMap> {
+  const { userId } = await auth();
+  if (!userId) return {};
+
+  const entries = await Promise.all(
+    saved.map(async ({ ticker, accessionNumber }) => {
+      // Without a saved accession we have nothing to compare against.
+      if (!accessionNumber) return [ticker, false] as const;
+      try {
+        const resolved = await resolveLatestFiling(ticker);
+        if (!resolved.ok) return [ticker, false] as const;
+        return [ticker, resolved.filing.accessionNumber !== accessionNumber] as const;
+      } catch {
+        return [ticker, false] as const;
+      }
+    }),
+  );
+  return Object.fromEntries(entries);
 }
 
 /**

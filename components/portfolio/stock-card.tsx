@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { SavedStock } from "@/lib/portfolio/types.ts";
+import type { SavedStockWithHealth } from "@/lib/portfolio/types.ts";
+import { CompanyLogo } from "./company-logo";
+import { HealthPill } from "./health-pill";
 
 const cardShell = "rounded-2xl bg-card ring-1 ring-sand-900/8 shadow-card";
 
@@ -19,23 +21,18 @@ function formatDate(iso: string): string {
 }
 
 /**
- * One saved company. Deliberately minimal for now, but structured so richer
- * content drops in without rebuilding the page or the dashboard:
- *
- *   • the header row has room on the right for a "new filing" badge
- *   • the FUTURE CONTENT slot below the meta line is where a preview insight,
- *     a revenue-direction chip, etc. will go
- *
- * The whole card is a link to the full analysis (/?ticker=…). The remove
- * control is a sibling of the link (not nested inside it) so clicking remove
- * never triggers navigation.
+ * One saved company, as a rich card: logo, name + ticker, Business Health at a
+ * glance, latest filing meta, and a "new filing" indicator when EDGAR shows one
+ * newer than what was saved. The whole card links to the full analysis; the
+ * remove control is a sibling of the link (not nested) so removing never
+ * triggers navigation.
  */
 export function StockCard({
   stock,
   onRemove,
   removing,
 }: {
-  stock: SavedStock;
+  stock: SavedStockWithHealth;
   onRemove: (ticker: string) => void;
   removing: boolean;
 }) {
@@ -45,25 +42,40 @@ export function StockCard({
         href={`/?ticker=${encodeURIComponent(stock.ticker)}`}
         className={cn(
           cardShell,
-          "block p-5 transition-colors hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+          "flex flex-col gap-4 p-5 transition-colors hover:ring-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
         )}
       >
-        <div className="flex items-start justify-between gap-3">
-          <span className="rounded-md bg-accent px-2 py-0.5 text-sm font-medium tracking-wide text-accent-foreground ring-1 ring-brand-100">
-            {stock.ticker}
-          </span>
-          {/* FUTURE SLOT: "new filing" badge goes here (space reserved on the right). */}
+        {/* Header: logo + name/ticker. Right padding leaves room for the
+            remove control that appears on hover (absolute, below). */}
+        <div className="flex items-center gap-3 pr-8">
+          <CompanyLogo ticker={stock.ticker} companyName={stock.companyName} />
+          <div className="flex min-w-0 flex-col">
+            <h3 className="truncate text-base font-semibold leading-snug tracking-tight">
+              {stock.companyName}
+            </h3>
+            <span className="text-xs font-medium tracking-wide text-muted-foreground">
+              {stock.ticker}
+            </span>
+          </div>
         </div>
 
-        <h3 className="mt-3 line-clamp-2 text-base font-semibold leading-snug tracking-tight">
-          {stock.companyName}
-        </h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Latest report{stock.form ? ` (${stock.form})` : ""} · {formatDate(stock.filedDate)}
-        </p>
+        {/* Business health — the reason to glance at this page. self-start so
+            the pill hugs its content instead of stretching the column width. */}
+        <HealthPill health={stock.health} className="self-start" />
 
-        {/* FUTURE CONTENT: preview insight line, revenue-direction indicator,
-            etc. Add elements here — the card and grid won't need changes. */}
+        {/* Filing meta + new-filing indicator. flex-wrap so the badge drops
+            below the (potentially long) filing line on narrow cards. */}
+        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 border-t border-border pt-3">
+          <span className="min-w-0 text-xs text-muted-foreground">
+            Latest report{stock.form ? ` (${stock.form})` : ""} · {formatDate(stock.filedDate)}
+          </span>
+          {stock.hasNewerFiling && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700 ring-1 ring-brand-100">
+              <span className="size-1.5 rounded-full bg-brand-600" aria-hidden />
+              New filing
+            </span>
+          )}
+        </div>
       </Link>
 
       <button

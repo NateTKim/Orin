@@ -6,6 +6,7 @@ import { DiscoverLink } from "@/components/discover-link";
 import { DashboardSearch } from "@/components/portfolio/dashboard-search";
 import { PortfolioGrid, PortfolioLoadError } from "@/components/portfolio/portfolio-grid";
 import { getSavedStocks } from "@/lib/portfolio/actions.ts";
+import { attachHealth } from "@/lib/portfolio/enrich.ts";
 
 // Reads the signed-in user's saved rows on the server, so nothing renders until
 // auth is known and RLS has scoped the query to this user.
@@ -16,8 +17,11 @@ export default async function DashboardPage() {
   // Logged-out visitors have no dashboard — send them to the landing page.
   if (!userId) redirect("/");
 
-  // null = a real load failure (distinct from an empty portfolio).
+  // null = a real load failure (distinct from an empty portfolio). When we have
+  // rows, attach each company's Business Health from its CACHED analysis — one
+  // batched Supabase read, no EDGAR/Claude (see attachHealth).
   const stocks = await getSavedStocks();
+  const enriched = stocks === null ? null : await attachHealth(stocks);
 
   return (
     // Calm workspace: warm paper with a barely-there brand wash up top.
@@ -48,10 +52,10 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {stocks === null ? (
+        {enriched === null ? (
           <PortfolioLoadError />
         ) : (
-          <PortfolioGrid initialStocks={stocks} />
+          <PortfolioGrid initialStocks={enriched} />
         )}
 
         <footer className="border-t border-border pt-6 text-xs leading-5 text-muted-foreground">
