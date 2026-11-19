@@ -27,15 +27,17 @@
 # claude code local settings
 .claude/settings.local.json
 
-# debug
+# debug / logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
+logs/
 
 # env files — never commit real secrets (.env.example stays committed)
-.env
-.env*.local
+.env*
+!.env.example
 
 # vercel
 .vercel
@@ -43,6 +45,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-.vercel
-.env*
