@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ---------------------------------------------------------------------------
-   Orin design tokens — warm redesign, Pass 1 (see DESIGN.md).
+   Orin design tokens (see docs/DESIGN.md).
 
    Raw scales live in @theme and are available as Tailwind utilities
    (bg-brand-600, text-sand-500, text-up, shadow-card, font-display, …).

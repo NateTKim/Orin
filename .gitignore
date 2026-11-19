@@ -45,3 +45,9 @@ logs/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local planning notes (kept on disk, not in the repo)
+/PROJECT.md
+/PROGRESS.md
+/LAUNCH_READINESS.md
+/LATER.md

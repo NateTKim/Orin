@@ -30,6 +30,8 @@ ticker → CIK → latest 10-K/10-Q → XBRL company facts → normalized metric
    - **Missing data shows "not reported."** No figure is ever estimated. Gross margin is calculated only from reported gross profit or cost of revenue, and is otherwise "not reported" (banks and REITs, for example).
 3. **Write the prose, without inventing numbers.** Claude receives the extracted figures, already formatted, along with relevant filing text. It is told to use only those figures, verbatim. After it responds, every number in its output is checked against the figures and the filing text. If any number fails that check, the summary is withheld and only the extracted figures are shown.
 
+For the full design (request flow, caching, auth and RLS, the dashboard and the feed), see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
 ### Business Health score
 
 This is a deterministic 1–10 score computed from the extracted metrics. No language model is involved, so the same filing always gets the same score. Six weighted signals feed it:
