@@ -21,8 +21,7 @@ export class EdgarError extends Error {
 function getSecUserAgent(): string {
   // Strip BOM/zero-width characters — env vars set via Windows tooling can
   // carry a leading U+FEFF, which is illegal in an HTTP header value.
-  // eslint-disable-next-line no-misleading-character-class -- U+FEFF (BOM) and U+200B (zero-width space)
-  const ua = process.env.SEC_USER_AGENT?.replace(/[﻿​]/g, "").trim();
+  const ua = process.env.SEC_USER_AGENT?.replace(/[\uFEFF\u200B]/g, "").trim();
   if (!ua || ua.trim() === "") {
     throw new Error(
       "SEC_USER_AGENT env var is not set. EDGAR blocks requests without it. " +

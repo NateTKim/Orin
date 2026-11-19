@@ -5,7 +5,7 @@ import { clerkMiddleware } from "@clerk/nextjs/server";
 // the default export runs on every matched request.
 //
 // clerkMiddleware() attaches Clerk's auth context so that `auth()` works in
-// server code and <SignedIn>/<SignedOut> work in the UI.
+// server code (client components read auth state with the useUser() hook).
 //
 // IMPORTANT: on its own it does NOT protect or gate anything — every route
 // stays public. Logged-out users can still look up tickers exactly as before.

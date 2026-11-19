@@ -78,8 +78,3 @@ export function clientKey(request: Request): string {
   const first = fwd?.split(",")[0]?.trim();
   return first && first.length > 0 ? first : "unknown";
 }
-
-/** Test-only: clear all counters so tests don't leak state into each other. */
-export function __resetRateLimitForTests(): void {
-  hitsByKey.clear();
-}

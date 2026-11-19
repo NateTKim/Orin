@@ -24,9 +24,7 @@ function filedAgo(iso: string): string {
 /**
  * One company in the discovery feed. Presentational: the whole card links to
  * the full analysis (/?ticker=…); the save control is a sibling of the link so
- * it never triggers navigation. Structured with a FUTURE CONTENT slot so richer
- * content (a preview insight, revenue-direction chip, etc.) can be added later
- * without touching the page — same approach as the portfolio cards.
+ * it never triggers navigation.
  *
  * Framing is deliberately neutral: "New report · filed 3 days ago" — never a
  * buy/sell signal.
@@ -66,9 +64,6 @@ export function FeedCard({
         <p className="mt-1 text-xs text-muted-foreground">
           New report · {item.form} · filed {filedAgo(item.filedDate)}
         </p>
-
-        {/* FUTURE CONTENT: preview insight / revenue-direction / "new filing"
-            emphasis can drop in here without changing the grid or page. */}
       </Link>
 
       {/* Save control — reflects portfolio membership for signed-in users, or

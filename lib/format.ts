@@ -1,5 +1,5 @@
 // Display-time formatting of raw EDGAR values. Extraction keeps raw units;
-// everything user-facing (UI later, LLM prompt now) goes through here.
+// everything user-facing (the UI and the LLM prompt) goes through here.
 
 /** "$111.18 billion", "-$416.00 million", "$95,359" for small values. */
 export function formatUsd(value: number): string {

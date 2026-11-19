@@ -14,12 +14,13 @@
 // meaningful, we return { available: false } and the UI shows an honest
 // "not enough data" state rather than a misleading number.
 //
-// The six signals and their weights (must sum to 1.0):
-//   Revenue growth (current YoY) .......... 0.24  — is the top line growing?
-//   Revenue trend (multi-period) .......... 0.14  — is that growth consistent?
-//   Margin direction ...................... 0.14  — is the business getting
+// The six signals and their weights (must sum to 1.0; WEIGHTS below is the
+// source of truth):
+//   Revenue growth (current YoY) .......... 0.26  — is the top line growing?
+//   Revenue trend (multi-period) .......... 0.10  — is that growth consistent?
+//   Margin direction ...................... 0.18  — is the business getting
 //                                                   more efficient?
-//   Profitability (level + trajectory) .... 0.24  — does it make money, and is
+//   Profitability (level + trajectory) .... 0.22  — does it make money, and is
 //                                                   that improving? (losses
 //                                                   narrowing vs widening)
 //   Operating income trajectory ........... 0.12  — core operations' direction

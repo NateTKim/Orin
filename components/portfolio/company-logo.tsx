@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
 // real logos later, render an <img> here with an onError fallback to the
 // monogram below — nothing else in the dashboard changes.
 
-// Soft, warm, on-brand tints (no violet — we moved away from that). Chosen so
-// the grid gets gentle variety without clashing with the palette.
+// Soft, warm, on-brand tints, chosen so the grid gets gentle variety without
+// clashing with the palette.
 const TINTS = [
   "bg-brand-100 text-brand-700",
   "bg-[oklch(0.93_0.045_150)] text-[oklch(0.45_0.1_150)]", // green
