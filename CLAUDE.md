@@ -1,6 +1,8 @@
 # CLAUDE.md
 
-This file is auto-loaded by Claude Code every session. It defines how to work in this repository. Read it fully before doing anything. Also read `PROJECT.md` for the full product spec.
+This file is auto-loaded by Claude Code every session. It defines how to work in this repository. Read it fully before doing anything. Also read `docs/ARCHITECTURE.md` for how the app works.
+
+`PROJECT.md` (the original MVP spec and build phases) and `LATER.md` (the parking lot for deferred ideas) are **local-only notes**: gitignored, kept on the owner's machine, and not part of the public repo. Read them when present; never commit them.
 
 ## What this project is
 
@@ -8,9 +10,9 @@ A web tool where a user types a stock ticker and gets the company's latest SEC f
 
 ## The prime directive: respect the phase gates
 
-The build is split into ordered phases in `PROJECT.md`. **Do not skip ahead.** Complete a phase, confirm it works, then stop and wait for me before starting the next. The hard, valuable part of this product is reliable financial-data extraction — that gets proven in isolation BEFORE any UI is built.
+The build is split into ordered phases in `PROJECT.md` (local-only). **Do not skip ahead.** Complete a phase, confirm it works, then stop and wait for me before starting the next. The hard, valuable part of this product is reliable financial-data extraction — that gets proven in isolation BEFORE any UI is built.
 
-If you ever feel the urge to build something not in the current phase, **do not build it.** Add it to `LATER.md` and keep going.
+If you ever feel the urge to build something not in the current phase, **do not build it.** Add it to `LATER.md` (local-only) and keep going.
 
 ## Non-negotiable rules
 
@@ -28,10 +30,11 @@ If you ever feel the urge to build something not in the current phase, **do not 
 - Anthropic Claude API via `@anthropic-ai/sdk` (for summaries only)
 - SEC EDGAR REST APIs for all financial data (free, no key)
 - Vercel for deployment
-- **No database** in the MVP
-- **No auth** in the MVP
+- Supabase (Postgres + Row Level Security) for the shared filing and feed caches and saved portfolios
+- Clerk for authentication (the app stays fully usable logged out; accounts are only needed to save)
+- Recharts for charts
 
-## EDGAR ground rules (full detail in PROJECT.md)
+## EDGAR ground rules (full detail in `docs/ARCHITECTURE.md`)
 
 - A `User-Agent` header is REQUIRED on every EDGAR request. Read it from the `SEC_USER_AGENT` env var. Never hardcode it.
 - Stay under 10 requests/second. Centralize all EDGAR calls in one client module that enforces the header and a small delay.
